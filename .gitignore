@@ -1,0 +1,5 @@
+static/css/app.css
+/server
+*.exe
+.vscode/
+.idea/

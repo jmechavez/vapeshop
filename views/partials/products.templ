@@ -1,0 +1,240 @@
+package partials
+
+import (
+	"strconv"
+
+	"github.com/jmechavez/vapeshop/internal/products"
+)
+
+templ ProductsTable(list []products.ProductWithStock) {
+	<div id="products-table" class="bg-white rounded-sm shadow-sm overflow-hidden">
+		<div class="overflow-x-auto">
+			<table class="min-w-full text-sm">
+				<thead class="bg-gray-50 text-left text-gray-600">
+					<tr>
+						<th class="px-4 py-3">SKU</th>
+						<th class="px-4 py-3">Name</th>
+						<th class="px-4 py-3 hidden md:table-cell">Brand</th>
+						<th class="px-4 py-3 hidden md:table-cell">Flavor</th>
+						<th class="px-4 py-3 text-right">Price</th>
+						<th class="px-4 py-3 text-right">Stock</th>
+						<th class="px-4 py-3"></th>
+					</tr>
+				</thead>
+				<tbody>
+					if len(list) == 0 {
+						<tr>
+							<td colspan="7" class="px-4 py-8 text-center text-gray-500">
+								No products yet. Click "Add Product" to get started.
+							</td>
+						</tr>
+					}
+					for _, p := range list {
+						@ProductRow(p)
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+}
+
+// ProductsTableOOB is returned after a successful create.
+// It replaces #products-table via an out-of-band swap, and empties #modal.
+templ ProductsTableOOB(list []products.ProductWithStock) {
+	@ProductsTable(list)
+	<div id="modal" hx-swap-oob="true"></div>
+}
+
+templ ProductRow(p products.ProductWithStock) {
+	<tr id={ "product-row-" + strconv.FormatInt(p.ID, 10) } class="border-t border-gray-100">
+		<td class="px-4 py-3 font-mono text-xs">{ p.SKU }</td>
+		<td class="px-4 py-3">
+			<div class="font-medium">{ p.Name }</div>
+			if p.Version != "" {
+				<div class="text-xs text-gray-500">{ p.Version }</div>
+			}
+		</td>
+		<td class="px-4 py-3 hidden md:table-cell">{ p.Brand }</td>
+		<td class="px-4 py-3 hidden md:table-cell">{ p.Flavor }</td>
+		<td class="px-4 py-3 text-right">{ money(p.SellingPrice) }</td>
+		<td class="px-4 py-3 text-right">
+			if p.CurrentStock <= p.MinimumStock {
+				<span class="px-2 py-1 rounded-sm bg-red-100 text-red-800 text-xs">
+					{ strconv.Itoa(p.CurrentStock) }
+				</span>
+			} else {
+				{ strconv.Itoa(p.CurrentStock) }
+			}
+		</td>
+		<td class="px-4 py-3 text-right whitespace-nowrap">
+			<button
+				hx-get={ "/products/" + strconv.FormatInt(p.ID, 10) + "/edit" }
+				hx-target={ "#product-row-" + strconv.FormatInt(p.ID, 10) }
+				hx-swap="outerHTML"
+				class="px-3 py-2 text-sm border border-gray-300 rounded-sm mr-2">
+				Edit
+			</button>
+			<button
+				hx-delete={ "/products/" + strconv.FormatInt(p.ID, 10) }
+				hx-confirm={ "Delete " + p.Name + "?" }
+				hx-target={ "#product-row-" + strconv.FormatInt(p.ID, 10) }
+				hx-swap="outerHTML"
+				class="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-sm">
+				Delete
+			</button>
+		</td>
+	</tr>
+}
+
+// ProductRowEdit is the same row, but every cell is an input.
+templ ProductRowEdit(p products.ProductWithStock, errMsg string) {
+	<tr id={ "product-row-" + strconv.FormatInt(p.ID, 10) } class="border-t border-gray-100 bg-yellow-50">
+		<td class="px-3 py-2">
+			<input name="sku" value={ p.SKU } required
+			       class="w-28 px-2 py-2 border border-gray-300 rounded-sm text-sm"/>
+		</td>
+		<td class="px-3 py-2">
+			<input name="name" value={ p.Name } required
+			       class="w-full min-w-[10rem] px-2 py-2 border border-gray-300 rounded-sm text-sm"/>
+			if errMsg != "" {
+				<div class="text-xs text-red-700 mt-1">{ errMsg }</div>
+			}
+		</td>
+		<td class="px-3 py-2 hidden md:table-cell">
+			<input name="brand" value={ p.Brand }
+			       class="w-24 px-2 py-2 border border-gray-300 rounded-sm text-sm"/>
+		</td>
+		<td class="px-3 py-2 hidden md:table-cell">
+			<input name="flavor" value={ p.Flavor }
+			       class="w-24 px-2 py-2 border border-gray-300 rounded-sm text-sm"/>
+		</td>
+		<td class="px-3 py-2 text-right">
+			<input name="selling_price" type="number" step="0.01" min="0"
+			       value={ formatFloat(p.SellingPrice) }
+			       class="w-24 px-2 py-2 border border-gray-300 rounded-sm text-sm text-right"/>
+		</td>
+		<td class="px-3 py-2 text-right text-gray-500 text-sm">
+			{ strconv.Itoa(p.CurrentStock) }
+		</td>
+		<td class="px-3 py-2 text-right whitespace-nowrap">
+			<button
+				hx-put={ "/products/" + strconv.FormatInt(p.ID, 10) }
+				hx-include="closest tr"
+				hx-target={ "#product-row-" + strconv.FormatInt(p.ID, 10) }
+				hx-swap="outerHTML"
+				class="px-3 py-2 text-sm bg-black text-white rounded-sm mr-2">
+				Save
+			</button>
+			<button
+				hx-get={ "/products/" + strconv.FormatInt(p.ID, 10) + "/row" }
+				hx-target={ "#product-row-" + strconv.FormatInt(p.ID, 10) }
+				hx-swap="outerHTML"
+				class="px-3 py-2 text-sm border border-gray-300 rounded-sm">
+				Cancel
+			</button>
+		</td>
+	</tr>
+}
+
+// ProductFormModal is the Add-Product modal.
+templ ProductFormModal(p products.Product, errMsg string) {
+	<div class="fixed inset-0 bg-black/40 z-40 flex items-start sm:items-center justify-center p-4"
+	     id="product-modal">
+		<div class="bg-white rounded-sm shadow-lg w-full max-w-lg mt-10 sm:mt-0">
+			<div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+				<h2 class="text-lg font-semibold">Add Product</h2>
+				<button
+					onclick="document.getElementById('modal').innerHTML=''"
+					class="text-2xl leading-none text-gray-500 px-2">
+					&times;
+				</button>
+			</div>
+			<form hx-post="/products" hx-target="#products-table" hx-swap="outerHTML"
+			      class="p-5 space-y-4">
+				if errMsg != "" {
+					<div class="px-3 py-2 rounded-sm bg-red-100 text-red-800 text-sm">
+						{ errMsg }
+					</div>
+				}
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					@textField("sku", "SKU *", p.SKU)
+					@textField("barcode", "Barcode", p.Barcode)
+					@textField("name", "Name *", p.Name)
+					@textField("brand", "Brand", p.Brand)
+					@textField("version", "Version", p.Version)
+					@textField("flavor", "Flavor", p.Flavor)
+					@textField("category", "Category", p.Category)
+					@numberField("cost_price", "Cost price", p.CostPrice)
+					@numberField("selling_price", "Selling price", p.SellingPrice)
+					@intField("minimum_stock", "Minimum stock", p.MinimumStock)
+				</div>
+				<div class="flex justify-end gap-2 pt-2">
+					<button type="button"
+					        onclick="document.getElementById('modal').innerHTML=''"
+					        class="px-4 py-3 rounded-sm border border-gray-300 text-sm">
+						Cancel
+					</button>
+					<button type="submit"
+					        class="px-4 py-3 rounded-sm bg-black text-white text-sm font-medium">
+						Save Product
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+// --- small field helpers ---
+
+templ textField(name, label, value string) {
+	<label class="block">
+		<span class="block text-xs font-medium text-gray-600 mb-1">{ label }</span>
+		<input name={ name } value={ value }
+		       class="w-full px-3 py-3 border border-gray-300 rounded-sm text-sm"/>
+	</label>
+}
+
+templ numberField(name, label string, value float64) {
+	<label class="block">
+		<span class="block text-xs font-medium text-gray-600 mb-1">{ label }</span>
+		<input name={ name } type="number" step="0.01" min="0" value={ formatFloat(value) }
+		       class="w-full px-3 py-3 border border-gray-300 rounded-sm text-sm"/>
+	</label>
+}
+
+templ intField(name, label string, value int) {
+	<label class="block">
+		<span class="block text-xs font-medium text-gray-600 mb-1">{ label }</span>
+		<input name={ name } type="number" min="0" value={ strconv.Itoa(value) }
+		       class="w-full px-3 py-3 border border-gray-300 rounded-sm text-sm"/>
+	</label>
+}
+
+// --- formatting helpers ---
+
+func money(v float64) string {
+	return "PHP " + formatFloat(v)
+}
+
+func formatFloat(v float64) string {
+	return strconv.FormatFloat(v, 'f', 2, 64)
+}
+
+templ ProductsTableWithImportReport(list []products.ProductWithStock, created int, failed []string) {
+	@ProductsTable(list)
+	if created > 0 || len(failed) > 0 {
+		<div class="mt-4 p-4 rounded-sm bg-white shadow-sm text-sm">
+			<div class="font-medium mb-2">
+				Imported { strconv.Itoa(created) } product(s).
+			</div>
+			if len(failed) > 0 {
+				<ul class="list-disc pl-5 text-red-700 space-y-1">
+					for _, f := range failed {
+						<li>{ f }</li>
+					}
+				</ul>
+			}
+		</div>
+	}
+	<div id="modal" hx-swap-oob="true"></div>
+}

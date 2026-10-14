@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+button, a[role="button"], .btn {
+  min-height: 44px;
+}

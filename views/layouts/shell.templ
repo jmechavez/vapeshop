@@ -1,0 +1,59 @@
+package layouts
+
+import "github.com/jmechavez/vapeshop/internal/auth"
+
+templ Shell(sess *auth.Session, title string, active string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title } - Drift Culture</title>
+			<link rel="stylesheet" href="/static/css/app.css"/>
+			<script src="/static/js/htmx.min.js"></script>
+		</head>
+		<body class="bg-gray-50 text-gray-900 min-h-screen">
+			<header class="bg-white shadow-sm sticky top-0 z-30">
+				<div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+					<a href="/dashboard" class="text-lg font-bold">Drift Culture</a>
+					<div class="flex items-center gap-3">
+						<span class="text-xs text-gray-600 hidden sm:inline">
+							{ sess.FullName } ({ sess.Role })
+						</span>
+						<form method="POST" action="/logout">
+							<button type="submit"
+							        class="px-3 py-2 rounded-sm border border-gray-300 text-sm">
+								Logout
+							</button>
+						</form>
+					</div>
+				</div>
+				<nav class="border-t border-gray-100 overflow-x-auto">
+					<div class="max-w-6xl mx-auto px-4 flex gap-1 whitespace-nowrap">
+						@navLink("/dashboard", "Dashboard", active)
+						@navLink("/products", "Products", active)
+						@navLink("/inventory", "Inventory", active)
+						@navLink("/sales", "Sales", active)
+						@navLink("/suppliers", "Suppliers", active)
+						@navLink("/reports", "Reports", active)
+					</div>
+				</nav>
+			</header>
+
+			<main class="max-w-6xl mx-auto px-4 py-6">
+				{ children... }
+			</main>
+		</body>
+	</html>
+}
+
+templ navLink(href, label, active string) {
+	<a href={ href }
+	   class={
+		   "px-4 py-3 text-sm font-medium border-b-2 flex items-center min-h-[44px]",
+		   templ.KV("border-black text-black", active == label),
+		   templ.KV("border-transparent text-gray-600", active != label),
+	   }>
+		{ label }
+	</a>
+}

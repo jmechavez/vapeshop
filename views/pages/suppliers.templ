@@ -1,0 +1,121 @@
+// views/pages/suppliers.templ
+package pages
+
+import (
+	"fmt"
+
+	"github.com/jmechavez/vapeshop/internal/auth"
+	"github.com/jmechavez/vapeshop/internal/suppliers"
+	"github.com/jmechavez/vapeshop/views/layouts"
+	"github.com/jmechavez/vapeshop/views/partials"
+)
+
+// SuppliersPage is the /suppliers full page.
+templ SuppliersPage(sess *auth.Session, list []suppliers.SupplierWithStats) {
+	@layouts.Shell(sess, "Suppliers", sess.FullName) {
+		<div class="flex items-center justify-between mb-6">
+			<div>
+				<h1 class="text-2xl font-semibold text-slate-800">Suppliers</h1>
+				<p class="text-sm text-slate-500 mt-1">Manage your vendors and see their purchase history.</p>
+			</div>
+			<button
+				hx-get="/suppliers/new"
+				hx-target="#modal-root"
+				hx-swap="innerHTML"
+				class="px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700"
+			>
+				+ Add supplier
+			</button>
+		</div>
+
+		<!-- Flash message area for delete errors -->
+		<div id="flash" class="mb-4"></div>
+
+		@partials.SuppliersTable(list)
+
+		<div id="modal-root"></div>
+	}
+}
+
+// SupplierDetailPage is the /suppliers/{id} full page.
+templ SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []suppliers.PurchaseRow) {
+	@layouts.Shell(sess, "Supplier: "+s.Name, sess.FullName) {
+		<div class="flex items-center justify-between mb-6">
+			<div>
+				<div class="text-xs text-slate-500 mb-1">
+					<a href="/suppliers" class="hover:underline">Suppliers</a>
+					<span> / </span>
+					<span>{ s.Name }</span>
+				</div>
+				<h1 class="text-2xl font-semibold text-slate-800">{ s.Name }</h1>
+			</div>
+			<a
+				href="/suppliers"
+				class="px-3 py-2 text-sm rounded-md border border-slate-300 hover:bg-slate-50"
+			>
+				Back to suppliers
+			</a>
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+			<div class="bg-white border border-slate-200 rounded-lg p-4 md:col-span-2">
+				<h2 class="text-sm font-semibold text-slate-700 mb-3">Contact</h2>
+				<dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+					<div>
+						<dt class="text-xs text-slate-500">Contact person</dt>
+						<dd class="text-slate-800">
+							if s.ContactPerson != "" {
+								{ s.ContactPerson }
+							} else {
+								<span class="text-slate-400">—</span>
+							}
+						</dd>
+					</div>
+					<div>
+						<dt class="text-xs text-slate-500">Phone</dt>
+						<dd class="text-slate-800">
+							if s.Phone != "" {
+								{ s.Phone }
+							} else {
+								<span class="text-slate-400">—</span>
+							}
+						</dd>
+					</div>
+					<div>
+						<dt class="text-xs text-slate-500">Email</dt>
+						<dd class="text-slate-800">
+							if s.Email != "" {
+								{ s.Email }
+							} else {
+								<span class="text-slate-400">—</span>
+							}
+						</dd>
+					</div>
+					<div>
+						<dt class="text-xs text-slate-500">Address</dt>
+						<dd class="text-slate-800">
+							if s.Address != "" {
+								{ s.Address }
+							} else {
+								<span class="text-slate-400">—</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div class="bg-white border border-slate-200 rounded-lg p-4">
+				<h2 class="text-sm font-semibold text-slate-700 mb-3">Summary</h2>
+				<div class="text-sm">
+					<div class="text-slate-500">Total movements</div>
+					<div class="text-2xl font-semibold text-slate-800">{ fmt.Sprint(len(purchases)) }</div>
+				</div>
+			</div>
+		</div>
+
+		<h2 class="text-lg font-semibold text-slate-800 mb-3">Purchase history</h2>
+		@partials.PurchasesTable(purchases)
+
+		<div id="modal-root"></div>
+	}
+}

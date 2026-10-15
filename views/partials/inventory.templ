@@ -1,0 +1,317 @@
+// views/partials/inventory.templ
+package partials
+
+import (
+	"fmt"
+
+	"github.com/jmechavez/vapeshop/internal/inventory"
+)
+
+// ---------- Inventory list ----------
+
+templ InventoryTable(rows []inventory.InventoryRow) {
+	<div id="inventory-table" class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+		<table class="w-full text-sm">
+			<thead class="bg-slate-50 text-slate-600">
+				<tr>
+					<th class="text-left px-4 py-2 font-medium">SKU</th>
+					<th class="text-left px-4 py-2 font-medium">Product</th>
+					<th class="text-right px-4 py-2 font-medium">Stock</th>
+					<th class="text-right px-4 py-2 font-medium">Min</th>
+					<th class="text-left px-4 py-2 font-medium">Status</th>
+					<th class="text-right px-4 py-2 font-medium">Actions</th>
+				</tr>
+			</thead>
+			<tbody id="inventory-rows" class="divide-y divide-slate-100">
+				if len(rows) == 0 {
+					<tr>
+						<td colspan="6" class="px-4 py-6 text-center text-slate-500">No products yet.</td>
+					</tr>
+				}
+				for _, row := range rows {
+					@InventoryRow(row)
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+// InventoryRow is one <tr>. It has id="inventory-row-{id}" so htmx can
+// swap it out by ID after a receive/adjust.
+templ InventoryRow(row inventory.InventoryRow) {
+	<tr id={ "inventory-row-" + fmt.Sprint(row.ProductID) }>
+		<td class="px-4 py-2 font-mono text-xs text-slate-600">{ row.SKU }</td>
+		<td class="px-4 py-2">
+			<div class="font-medium text-slate-800">{ row.Name }</div>
+			if row.Brand != "" || row.Category != "" {
+				<div class="text-xs text-slate-500">
+					{ row.Brand }
+					if row.Brand != "" && row.Category != "" {
+						<span> · </span>
+					}
+					{ row.Category }
+				</div>
+			}
+		</td>
+		<td class="px-4 py-2 text-right tabular-nums">{ fmt.Sprint(row.CurrentStock) }</td>
+		<td class="px-4 py-2 text-right tabular-nums text-slate-500">{ fmt.Sprint(row.MinimumStock) }</td>
+		<td class="px-4 py-2">
+			if row.IsLowStock {
+				<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Low</span>
+			} else {
+				<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">OK</span>
+			}
+		</td>
+		<td class="px-4 py-2 text-right space-x-2 whitespace-nowrap">
+			<button
+				hx-get={ "/inventory/receive/" + fmt.Sprint(row.ProductID) }
+				hx-target="#modal-root"
+				hx-swap="innerHTML"
+				class="px-2 py-1 text-xs rounded-md bg-emerald-600 text-white hover:bg-emerald-500"
+			>
+				Receive
+			</button>
+			<button
+				hx-get={ "/inventory/adjust/" + fmt.Sprint(row.ProductID) }
+				hx-target="#modal-root"
+				hx-swap="innerHTML"
+				class="px-2 py-1 text-xs rounded-md bg-amber-500 text-white hover:bg-amber-400"
+			>
+				Adjust
+			</button>
+		</td>
+	</tr>
+}
+
+// ---------- Receive modal ----------
+
+templ ReceiveModal(row inventory.InventoryRow, suppliers []inventory.Supplier) {
+	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/40" id="modal-backdrop">
+		<div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+			<div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+				<h2 class="text-base font-semibold text-slate-800">Receive stock</h2>
+				<button
+					type="button"
+					onclick="document.getElementById('modal-root').innerHTML=''"
+					class="text-slate-400 hover:text-slate-700 text-xl leading-none"
+				>&times;</button>
+			</div>
+
+			<form
+				hx-post={ "/inventory/receive/" + fmt.Sprint(row.ProductID) }
+				hx-target={ "#inventory-row-" + fmt.Sprint(row.ProductID) }
+				hx-swap="outerHTML"
+				hx-on::after-request="document.getElementById('modal-root').innerHTML=''"
+				class="px-5 py-4 space-y-3"
+			>
+				<div class="text-sm text-slate-600">
+					<div class="font-medium text-slate-800">{ row.Name }</div>
+					<div class="text-xs">SKU { row.SKU } · current stock { fmt.Sprint(row.CurrentStock) }</div>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">Quantity <span class="text-red-500">*</span></label>
+					<input
+						type="number"
+						name="quantity"
+						min="1"
+						required
+						class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">Unit cost</label>
+					<input
+						type="number"
+						name="unit_cost"
+						step="0.01"
+						min="0"
+						class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">Supplier</label>
+					<select name="supplier_id" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
+						<option value="">— none —</option>
+						for _, s := range suppliers {
+							<option value={ fmt.Sprint(s.ID) }>{ s.Name }</option>
+						}
+					</select>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">Reference</label>
+					<input
+						type="text"
+						name="reference"
+						class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+						placeholder="e.g. DR-2025-001"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">Notes</label>
+					<textarea
+						name="notes"
+						rows="2"
+						class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					></textarea>
+				</div>
+
+				<div class="flex justify-end gap-2 pt-2">
+					<button
+						type="button"
+						onclick="document.getElementById('modal-root').innerHTML=''"
+						class="px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50"
+					>Cancel</button>
+					<button
+						type="submit"
+						class="px-3 py-1.5 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-500"
+					>Receive</button>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+// ---------- Adjust modal ----------
+
+templ AdjustModal(row inventory.InventoryRow) {
+	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/40" id="modal-backdrop">
+		<div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+			<div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+				<h2 class="text-base font-semibold text-slate-800">Adjust stock</h2>
+				<button
+					type="button"
+					onclick="document.getElementById('modal-root').innerHTML=''"
+					class="text-slate-400 hover:text-slate-700 text-xl leading-none"
+				>&times;</button>
+			</div>
+
+			<form
+				hx-post={ "/inventory/adjust/" + fmt.Sprint(row.ProductID) }
+				hx-target={ "#inventory-row-" + fmt.Sprint(row.ProductID) }
+				hx-swap="outerHTML"
+				hx-on::after-request="document.getElementById('modal-root').innerHTML=''"
+				class="px-5 py-4 space-y-3"
+			>
+				<div class="text-sm text-slate-600">
+					<div class="font-medium text-slate-800">{ row.Name }</div>
+					<div class="text-xs">SKU { row.SKU } · current stock { fmt.Sprint(row.CurrentStock) }</div>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">New quantity <span class="text-red-500">*</span></label>
+					<input
+						type="number"
+						name="new_quantity"
+						min="0"
+						value={ fmt.Sprint(row.CurrentStock) }
+						required
+						class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					/>
+					<p class="text-xs text-slate-500 mt-1">The system will record the difference as an adjustment.</p>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-slate-600 mb-1">Reason <span class="text-red-500">*</span></label>
+					<textarea
+						name="notes"
+						rows="2"
+						required
+						class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+						placeholder="e.g. Damaged units, recount, shrinkage"
+					></textarea>
+				</div>
+
+				<div class="flex justify-end gap-2 pt-2">
+					<button
+						type="button"
+						onclick="document.getElementById('modal-root').innerHTML=''"
+						class="px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50"
+					>Cancel</button>
+					<button
+						type="submit"
+						class="px-3 py-1.5 text-sm rounded-md bg-amber-500 text-white hover:bg-amber-400"
+					>Save adjustment</button>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+// ---------- Movements table ----------
+
+templ MovementsTable(movements []inventory.Movement) {
+	<div id="movements-table" class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+		<table class="w-full text-sm">
+			<thead class="bg-slate-50 text-slate-600">
+				<tr>
+					<th class="text-left px-3 py-2 font-medium">Date</th>
+					<th class="text-left px-3 py-2 font-medium">Product</th>
+					<th class="text-left px-3 py-2 font-medium">Type</th>
+					<th class="text-right px-3 py-2 font-medium">Qty</th>
+					<th class="text-right px-3 py-2 font-medium">Unit cost</th>
+					<th class="text-left px-3 py-2 font-medium">Supplier</th>
+					<th class="text-left px-3 py-2 font-medium">User</th>
+					<th class="text-left px-3 py-2 font-medium">Reference / Notes</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-slate-100">
+				if len(movements) == 0 {
+					<tr>
+						<td colspan="8" class="px-3 py-6 text-center text-slate-500">No movements found.</td>
+					</tr>
+				}
+				for _, m := range movements {
+					<tr>
+						<td class="px-3 py-2 text-slate-600 whitespace-nowrap">
+							{ m.MovementDate.Format("2006-01-02 15:04") }
+						</td>
+						<td class="px-3 py-2">
+							<div class="font-medium text-slate-800">{ m.ProductName }</div>
+							<div class="text-xs font-mono text-slate-500">{ m.SKU }</div>
+						</td>
+						<td class="px-3 py-2">
+							if m.Type == "in" {
+								<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">in</span>
+							} else if m.Type == "out" {
+								<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">out</span>
+							} else {
+								<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">adjust</span>
+							}
+						</td>
+						<td class="px-3 py-2 text-right tabular-nums">
+							if m.Type == "adjust" && m.Quantity >= 0 {
+								<span class="text-emerald-700">+{ fmt.Sprint(m.Quantity) }</span>
+							} else if m.Type == "adjust" && m.Quantity < 0 {
+								<span class="text-rose-700">{ fmt.Sprint(m.Quantity) }</span>
+							} else {
+								{ fmt.Sprint(m.Quantity) }
+							}
+						</td>
+						<td class="px-3 py-2 text-right tabular-nums text-slate-600">
+							if m.UnitCost != nil {
+								{ fmt.Sprintf("%.2f", *m.UnitCost) }
+							} else {
+								<span class="text-slate-400">—</span>
+							}
+						</td>
+						<td class="px-3 py-2 text-slate-600">{ m.SupplierName }</td>
+						<td class="px-3 py-2 text-slate-600">{ m.Username }</td>
+						<td class="px-3 py-2 text-slate-600">
+							if m.Reference != "" {
+								<div class="text-xs text-slate-700">{ m.Reference }</div>
+							}
+							if m.Notes != "" {
+								<div class="text-xs text-slate-500">{ m.Notes }</div>
+							}
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}

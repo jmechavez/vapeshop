@@ -9,6 +9,25 @@ templ Base(title string) {
 			<title>{ title } - Drift Culture</title>
 			<link rel="stylesheet" href="/static/css/app.css"/>
 			<script src="/static/js/htmx.min.js"></script>
+
+			<!-- Small helper: shows delete errors in #flash -->
+			<script>
+				function handleSupplierDelete(event) {
+					var flash = document.getElementById('flash');
+					if (!flash) return;
+					var xhr = event.detail.xhr;
+					if (xhr.status >= 200 && xhr.status < 300) {
+						flash.innerHTML = '';
+						return;
+					}
+					var msg = (xhr.responseText || 'Delete failed.').trim();
+					flash.innerHTML =
+						'<div class="px-3 py-2 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-sm">' +
+						msg.replace(/[<>&]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }) +
+						'</div>';
+					setTimeout(function () { flash.innerHTML = ''; }, 5000);
+				}
+			</script>
 		</head>
 		<body class="bg-gray-50 text-gray-900 min-h-screen">
 			{ children... }

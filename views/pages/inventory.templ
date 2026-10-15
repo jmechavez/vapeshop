@@ -1,0 +1,102 @@
+// views/pages/inventory.templ
+package pages
+
+import (
+	"github.com/jmechavez/vapeshop/internal/auth"
+	"github.com/jmechavez/vapeshop/internal/inventory"
+	"github.com/jmechavez/vapeshop/views/layouts"
+	"github.com/jmechavez/vapeshop/views/partials"
+)
+
+templ InventoryPage(sess *auth.Session, rows []inventory.InventoryRow) {
+	@layouts.Shell(sess, "Stock inventory", sess.FullName) {
+		<div class="flex items-center justify-between mb-6">
+			<div>
+				<h1 class="text-2xl font-semibold text-slate-800">Inventory</h1>
+				<p class="text-sm text-slate-500 mt-1">Current stock for every active product.</p>
+			</div>
+			<a
+				href="/inventory/movements"
+				class="px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700"
+			>
+				View movements
+			</a>
+		</div>
+
+		@partials.InventoryTable(rows)
+		<div id="modal-root"></div>
+	}
+}
+
+templ MovementsPage(sess *auth.Session, movements []inventory.Movement, filter inventory.MovementFilter) {
+	@layouts.Shell(sess, "Stock movements", sess.FullName) {
+		<div class="flex items-center justify-between mb-6">
+			<div>
+				<h1 class="text-2xl font-semibold text-slate-800">Stock movements</h1>
+				<p class="text-sm text-slate-500 mt-1">History of every receive and adjust.</p>
+			</div>
+			<a
+				href="/inventory"
+				class="px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700"
+			>
+				Back to inventory
+			</a>
+		</div>
+
+		<form
+			hx-get="/inventory/movements"
+			hx-target="#movements-table"
+			hx-swap="outerHTML"
+			hx-push-url="true"
+			class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 bg-white border border-slate-200 rounded-lg p-4"
+		>
+			<div class="md:col-span-2">
+				<label class="block text-xs font-medium text-slate-600 mb-1">Search product (name or SKU)</label>
+				<input
+					type="text"
+					name="q"
+					value={ filter.Query }
+					placeholder="e.g. Elf Bar, ELF-BC-5000"
+					class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+				/>
+			</div>
+
+			<div>
+				<label class="block text-xs font-medium text-slate-600 mb-1">Type</label>
+				<select name="type" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
+					<option value="" selected?={ filter.Type == "" }>All types</option>
+					<option value="in" selected?={ filter.Type == "in" }>In</option>
+					<option value="out" selected?={ filter.Type == "out" }>Out</option>
+					<option value="adjust" selected?={ filter.Type == "adjust" }>Adjust</option>
+				</select>
+			</div>
+
+			<div>
+				<label class="block text-xs font-medium text-slate-600 mb-1">From</label>
+				<input
+					type="date"
+					name="date_from"
+					value={ filter.DateFrom }
+					class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+				/>
+			</div>
+
+			<div>
+				<label class="block text-xs font-medium text-slate-600 mb-1">To</label>
+				<input
+					type="date"
+					name="date_to"
+					value={ filter.DateTo }
+					class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+				/>
+			</div>
+
+			<div class="md:col-span-4 flex justify-end gap-2">
+				<a href="/inventory/movements" class="px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50">Clear</a>
+				<button type="submit" class="px-3 py-1.5 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700">Filter</button>
+			</div>
+		</form>
+
+		@partials.MovementsTable(movements)
+	}
+}

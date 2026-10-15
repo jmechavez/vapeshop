@@ -42,7 +42,7 @@ func Base(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Drift Culture</title><link rel=\"stylesheet\" href=\"/static/css/app.css\"><script src=\"/static/js/htmx.min.js\"></script></head><body class=\"bg-gray-50 text-gray-900 min-h-screen\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Drift Culture</title><link rel=\"stylesheet\" href=\"/static/css/app.css\"><script src=\"/static/js/htmx.min.js\"></script><!-- Small helper: shows delete errors in #flash --><script>\n\t\t\t\tfunction handleSupplierDelete(event) {\n\t\t\t\t\tvar flash = document.getElementById('flash');\n\t\t\t\t\tif (!flash) return;\n\t\t\t\t\tvar xhr = event.detail.xhr;\n\t\t\t\t\tif (xhr.status >= 200 && xhr.status < 300) {\n\t\t\t\t\t\tflash.innerHTML = '';\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tvar msg = (xhr.responseText || 'Delete failed.').trim();\n\t\t\t\t\tflash.innerHTML =\n\t\t\t\t\t\t'<div class=\"px-3 py-2 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-sm\">' +\n\t\t\t\t\t\tmsg.replace(/[<>&]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }) +\n\t\t\t\t\t\t'</div>';\n\t\t\t\t\tsetTimeout(function () { flash.innerHTML = ''; }, 5000);\n\t\t\t\t}\n\t\t\t</script></head><body class=\"bg-gray-50 text-gray-900 min-h-screen\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

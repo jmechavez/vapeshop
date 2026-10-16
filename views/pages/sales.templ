@@ -1,0 +1,322 @@
+package pages
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/jmechavez/vapeshop/internal/auth"
+	"github.com/jmechavez/vapeshop/internal/sales"
+	"github.com/jmechavez/vapeshop/views/layouts"
+	"github.com/jmechavez/vapeshop/views/partials"
+)
+
+templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter) {
+	@layouts.Shell(sess, "Sales", displayName(sess)) {
+		<div class="p-6 space-y-4">
+			<div class="flex items-center justify-between">
+				<h1 class="text-xl font-semibold">Sales</h1>
+				<a href="/sales/new" class="px-3 py-2 bg-black text-white rounded text-sm">New sale</a>
+			</div>
+
+			<form method="get" action="/sales" class="flex flex-wrap gap-2 text-sm items-center">
+				<select name="status" class="border border-gray-300 rounded px-2 py-1">
+					if f.Status == "" {
+						<option value="" selected>All statuses</option>
+					} else {
+						<option value="">All statuses</option>
+					}
+					for _, s := range sales.Statuses {
+						if s == f.Status {
+							<option value={ s } selected>{ s }</option>
+						} else {
+							<option value={ s }>{ s }</option>
+						}
+					}
+				</select>
+				<label class="text-gray-600">From</label>
+				<input type="date" name="from" value={ f.DateFrom } class="border border-gray-300 rounded px-2 py-1"/>
+				<label class="text-gray-600">To</label>
+				<input type="date" name="to" value={ f.DateTo } class="border border-gray-300 rounded px-2 py-1"/>
+				<input type="text" name="ref" value={ f.Reference } placeholder="Reference…" class="border border-gray-300 rounded px-2 py-1"/>
+				<button type="submit" class="px-3 py-1 border border-gray-300 rounded">Filter</button>
+				<a href="/sales" class="px-3 py-1 text-gray-600 hover:underline">Reset</a>
+			</form>
+
+			<div class="bg-white border border-gray-200 rounded">
+				if len(list) == 0 {
+					<div class="p-6 text-center text-sm text-gray-500">No sales found.</div>
+				} else {
+					<table class="w-full text-sm">
+						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+							<tr>
+								<th class="px-3 py-2">Reference</th>
+								<th class="px-3 py-2">Date</th>
+								<th class="px-3 py-2">Cashier</th>
+								<th class="px-3 py-2 text-right">Items</th>
+								<th class="px-3 py-2 text-right">Total</th>
+								<th class="px-3 py-2">Payment</th>
+								<th class="px-3 py-2">Status</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-100">
+							for _, s := range list {
+								<tr>
+									<td class="px-3 py-2">
+										<a
+											href={ "/sales/" + strconv.FormatInt(s.ID, 10) }
+											class="text-blue-600 hover:underline font-mono text-xs"
+										>{ s.Reference }</a>
+									</td>
+									<td class="px-3 py-2">{ s.SaleDate.Format("2006-01-02 15:04") }</td>
+									<td class="px-3 py-2">{ s.CashierName }</td>
+									<td class="px-3 py-2 text-right">{ strconv.Itoa(s.ItemCount) }</td>
+									<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", s.Total) }</td>
+									<td class="px-3 py-2">{ s.PaymentMethod }</td>
+									<td class="px-3 py-2">
+										<span class={ statusBadgeClass(s.Status) }>{ s.Status }</span>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+		</div>
+	}
+}
+
+templ SalePOS(sess *auth.Session, sale sales.Sale) {
+	@layouts.Shell(sess, "New Sale", displayName(sess)) {
+		<div class="p-6 space-y-4">
+			<div class="flex items-center justify-between">
+				<h1 class="text-xl font-semibold">New sale</h1>
+				<a href="/sales" class="text-sm text-blue-600 hover:underline">← Back to sales</a>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<input
+						type="text"
+						name="q"
+						placeholder="Search product by name or SKU…"
+						class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+						hx-get={ "/sales/search-products?sale=" + strconv.FormatInt(sale.ID, 10) }
+						hx-trigger="keyup changed delay:300ms, search"
+						hx-target="#suggestions"
+						hx-swap="innerHTML"
+					/>
+					<div id="suggestions" class="mt-2"></div>
+				</div>
+				<div>
+					@partials.SaleCart(sale)
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ SaleDetail(sess *auth.Session, sale sales.Sale) {
+	@layouts.Shell(sess, "Sale "+sale.Reference, displayName(sess)) {
+		<div class="p-6 space-y-4">
+			<div class="flex items-center justify-between">
+				<h1 class="text-xl font-semibold font-mono">{ sale.Reference }</h1>
+				<div class="flex gap-2">
+					<a
+						href={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/receipt" }
+						class="text-sm px-3 py-1 border border-gray-300 rounded"
+					>Print receipt</a>
+					<a href="/sales" class="text-sm text-blue-600 hover:underline self-center">← Back to sales</a>
+				</div>
+			</div>
+
+			<div class="bg-white border border-gray-200 rounded p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+				<div>
+					<div class="text-xs text-gray-500">Date</div>
+					<div>{ sale.SaleDate.Format("2006-01-02 15:04") }</div>
+				</div>
+				<div>
+					<div class="text-xs text-gray-500">Cashier</div>
+					<div>{ sale.CashierName }</div>
+				</div>
+				<div>
+					<div class="text-xs text-gray-500">Payment</div>
+					<div>{ sale.PaymentMethod }</div>
+				</div>
+				<div>
+					<div class="text-xs text-gray-500">Status</div>
+					<div><span class={ statusBadgeClass(sale.Status) }>{ sale.Status }</span></div>
+				</div>
+			</div>
+
+			if sale.Status == "void" {
+				<div class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
+					<div class="font-semibold mb-1">This sale is void.</div>
+					if sale.VoidReason != "" {
+						<div><span class="text-red-700">Reason:</span> { sale.VoidReason }</div>
+					}
+					if sale.VoidedByName != "" {
+						<div><span class="text-red-700">Voided by:</span> { sale.VoidedByName }</div>
+					}
+					if sale.VoidedAt != nil {
+						<div><span class="text-red-700">Voided at:</span> { sale.VoidedAt.Format("2006-01-02 15:04") }</div>
+					}
+				</div>
+			}
+
+			<div class="bg-white border border-gray-200 rounded">
+				if len(sale.Items) == 0 {
+					<div class="p-6 text-center text-sm text-gray-500">No items.</div>
+				} else {
+					<table class="w-full text-sm">
+						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+							<tr>
+								<th class="px-3 py-2">SKU</th>
+								<th class="px-3 py-2">Product</th>
+								<th class="px-3 py-2 text-right">Qty</th>
+								<th class="px-3 py-2 text-right">Unit</th>
+								<th class="px-3 py-2 text-right">Subtotal</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-100">
+							for _, it := range sale.Items {
+								<tr>
+									<td class="px-3 py-2 font-mono text-xs">{ it.SKU }</td>
+									<td class="px-3 py-2">{ it.ProductName }</td>
+									<td class="px-3 py-2 text-right">{ strconv.Itoa(it.Quantity) }</td>
+									<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", it.UnitPrice) }</td>
+									<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+
+			<div class="bg-white border border-gray-200 rounded p-4 max-w-sm ml-auto text-sm space-y-1">
+				<div class="flex justify-between"><span>Subtotal</span><span>₱{ fmt.Sprintf("%.2f", sale.Subtotal) }</span></div>
+				<div class="flex justify-between"><span>Discount</span><span>₱{ fmt.Sprintf("%.2f", sale.Discount) }</span></div>
+				<div class="flex justify-between font-semibold text-base border-t pt-1"><span>Total</span><span>₱{ fmt.Sprintf("%.2f", sale.Total) }</span></div>
+			</div>
+
+			if sale.Status == sales.StatusPending {
+				<div class="bg-white border border-gray-200 rounded p-4 space-y-3">
+					<div class="text-sm font-semibold">Void this sale</div>
+					<form
+						method="post"
+						action={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/void" }
+						class="space-y-3"
+						onsubmit="return confirm('Void this sale?');"
+					>
+						<div class="flex flex-col">
+							<label class="text-xs text-gray-500">Reason</label>
+							<select
+								name="reason"
+								required
+								class="border border-gray-300 rounded px-2 py-1 text-sm"
+								onchange="const n=this.form.querySelector('[name=note]');n.style.display=(this.value==='Other')?'block':'none';"
+							>
+								<option value="">Choose a reason…</option>
+								for _, r := range sales.VoidReasons {
+									<option value={ r }>{ r }</option>
+								}
+							</select>
+						</div>
+						<div class="flex flex-col">
+							<label class="text-xs text-gray-500">Note (only if "Other")</label>
+							<input
+								type="text"
+								name="note"
+								class="border border-gray-300 rounded px-2 py-1 text-sm"
+								style="display:none"
+							/>
+						</div>
+						<button
+							type="submit"
+							class="px-3 py-2 border border-red-300 text-red-600 rounded text-sm"
+						>Confirm void</button>
+					</form>
+				</div>
+			}
+
+			if sale.Status == sales.StatusCompleted {
+				<div class="bg-white border border-gray-200 rounded p-4 space-y-3">
+					<div class="text-sm font-semibold">Void this sale (restores stock)</div>
+					<form
+						method="post"
+						action={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/void" }
+						class="space-y-3"
+						onsubmit="return confirm('Void this sale? Stock will be restored.');"
+					>
+						<div class="flex flex-col">
+							<label class="text-xs text-gray-500">Reason</label>
+							<select
+								name="reason"
+								required
+								class="border border-gray-300 rounded px-2 py-1 text-sm"
+								onchange="const n=this.form.querySelector('[name=note]');n.style.display=(this.value==='Other')?'block':'none';"
+							>
+								<option value="">Choose a reason…</option>
+								for _, r := range sales.VoidReasons {
+									<option value={ r }>{ r }</option>
+								}
+							</select>
+						</div>
+						<div class="flex flex-col">
+							<label class="text-xs text-gray-500">Note (only if "Other")</label>
+							<input
+								type="text"
+								name="note"
+								class="border border-gray-300 rounded px-2 py-1 text-sm"
+								style="display:none"
+							/>
+						</div>
+						<button
+							type="submit"
+							class="px-3 py-2 border border-red-300 text-red-600 rounded text-sm"
+						>Confirm void</button>
+					</form>
+				</div>
+			}
+
+			if sale.Status == sales.StatusPending {
+				<div class="flex flex-wrap gap-2">
+					<a
+						href={ "/sales/new?sale=" + strconv.FormatInt(sale.ID, 10) }
+						class="px-3 py-2 border border-gray-300 rounded text-sm"
+					>Continue editing</a>
+					<form
+						method="post"
+						action={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete" }
+						onsubmit="return confirm('Complete this sale? Stock will be deducted.');"
+					>
+						<button
+							type="submit"
+							class="px-3 py-2 bg-black text-white rounded text-sm"
+						>Complete sale</button>
+					</form>
+				</div>
+			}
+		</div>
+	}
+}
+
+func statusBadgeClass(s string) string {
+	switch s {
+	case sales.StatusCompleted:
+		return "inline-block px-2 py-0.5 rounded text-xs bg-green-100 text-green-800"
+	case sales.StatusPending:
+		return "inline-block px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800"
+	case sales.StatusVoid:
+		return "inline-block px-2 py-0.5 rounded text-xs bg-red-100 text-red-800"
+	}
+	return "inline-block px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-800"
+}
+
+// displayName returns the field your auth.Session exposes for the shell.
+// If your struct has FullName, change sess.Username to sess.FullName here.
+func displayName(sess *auth.Session) string {
+	if sess == nil {
+		return ""
+	}
+	return sess.Username
+}

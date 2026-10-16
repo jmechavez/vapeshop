@@ -1,0 +1,124 @@
+package pages
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/jmechavez/vapeshop/internal/sales"
+)
+
+templ ReceiptPage(sale sales.Sale) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>{ "Receipt " + sale.Reference }</title>
+		<link rel="stylesheet" href="/static/css/app.css"/>
+		<style>
+			@media print {
+				.no-print { display: none !important; }
+				body { margin: 0; }
+				.receipt { box-shadow: none !important; border: none !important; }
+			}
+		</style>
+	</head>
+	<body class="bg-gray-100 min-h-screen">
+		<div class="no-print max-w-md mx-auto pt-4 px-4 flex items-center justify-between text-sm">
+			<a href={ templ.URL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="text-blue-600 hover:underline">
+				← Back to sale
+			</a>
+			<button
+				type="button"
+				class="px-3 py-1 bg-black text-white rounded"
+				onclick="window.print()"
+			>Print</button>
+		</div>
+
+		<div class="receipt max-w-md mx-auto my-4 bg-white border border-gray-300 rounded p-6 text-sm">
+			<div class="text-center border-b border-dashed border-gray-300 pb-3">
+				<div class="text-lg font-bold">Drift Culture</div>
+				<div class="text-xs text-gray-600">Vape Shop</div>
+			</div>
+
+			<div class="py-3 border-b border-dashed border-gray-300 text-xs space-y-1">
+				<div class="flex justify-between">
+					<span class="text-gray-500">Reference</span>
+					<span class="font-mono">{ sale.Reference }</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-gray-500">Date</span>
+					<span>{ sale.SaleDate.Format("2006-01-02 15:04") }</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-gray-500">Cashier</span>
+					<span>{ sale.CashierName }</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-gray-500">Payment</span>
+					<span>{ sale.PaymentMethod }</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-gray-500">Status</span>
+					<span class="uppercase">{ sale.Status }</span>
+				</div>
+			</div>
+
+			<table class="w-full text-xs py-3">
+				<thead>
+					<tr class="border-b border-dashed border-gray-300">
+						<th class="text-left py-1">Item</th>
+						<th class="text-right py-1">Qty</th>
+						<th class="text-right py-1">Price</th>
+						<th class="text-right py-1">Sub</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, it := range sale.Items {
+						<tr>
+							<td class="py-1">
+								<div>{ it.ProductName }</div>
+								<div class="text-gray-500 font-mono">{ it.SKU }</div>
+							</td>
+							<td class="text-right py-1 align-top">{ strconv.Itoa(it.Quantity) }</td>
+							<td class="text-right py-1 align-top">₱{ fmt.Sprintf("%.2f", it.UnitPrice) }</td>
+							<td class="text-right py-1 align-top">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+
+			<div class="border-t border-dashed border-gray-300 pt-3 text-xs space-y-1">
+				<div class="flex justify-between">
+					<span class="text-gray-500">Subtotal</span>
+					<span>₱{ fmt.Sprintf("%.2f", sale.Subtotal) }</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-gray-500">Discount</span>
+					<span>-₱{ fmt.Sprintf("%.2f", sale.Discount) }</span>
+				</div>
+				<div class="flex justify-between font-bold text-base pt-1 border-t border-gray-300 mt-1">
+					<span>Total</span>
+					<span>₱{ fmt.Sprintf("%.2f", sale.Total) }</span>
+				</div>
+			</div>
+
+			if sale.Status == "void" {
+				<div class="mt-3 p-2 bg-red-50 border border-red-200 text-xs text-red-700 rounded">
+					<div class="font-semibold">VOIDED</div>
+					if sale.VoidReason != "" {
+						<div>Reason: { sale.VoidReason }</div>
+					}
+					if sale.VoidedByName != "" {
+						<div>By: { sale.VoidedByName }</div>
+					}
+				</div>
+			}
+
+			<div class="text-center text-xs text-gray-500 mt-6 border-t border-dashed border-gray-300 pt-3">
+				Thank you!
+			</div>
+		</div>
+	</body>
+	</html>
+}

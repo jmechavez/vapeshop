@@ -16,6 +16,8 @@ import (
 	"github.com/jmechavez/vapeshop/internal/inventory"
 	appmw "github.com/jmechavez/vapeshop/internal/middleware"
 	"github.com/jmechavez/vapeshop/internal/products"
+	"github.com/jmechavez/vapeshop/internal/reports"
+	"github.com/jmechavez/vapeshop/internal/sales"
 	"github.com/jmechavez/vapeshop/internal/suppliers"
 	"github.com/jmechavez/vapeshop/views/pages"
 	"github.com/jmechavez/vapeshop/views/partials"
@@ -100,7 +102,6 @@ func main() {
 	supHandler := &suppliers.Handler{Repo: supRepo}
 
 	supHandler.RenderList = func(w http.ResponseWriter, r *http.Request, list []suppliers.SupplierWithStats) {
-		// If htmx asked for it, return only the table partial (e.g. after Create).
 		if r.Header.Get("HX-Request") == "true" {
 			partials.SuppliersTable(list).Render(r.Context(), w)
 			return
@@ -126,6 +127,46 @@ func main() {
 		pages.SupplierDetailPage(sess, s, purchases).Render(r.Context(), w)
 	}
 
+	// ---------- sales ----------
+	salesHandler := &sales.Handler{
+		RenderList: func(w http.ResponseWriter, r *http.Request, list []sales.Sale, f sales.Filter) {
+			sess := auth.FromContext(r.Context())
+			pages.SalesList(sess, list, f).Render(r.Context(), w)
+		},
+		RenderPOS: func(w http.ResponseWriter, r *http.Request, sale sales.Sale) {
+			sess := auth.FromContext(r.Context())
+			pages.SalePOS(sess, sale).Render(r.Context(), w)
+		},
+		RenderCart: func(w http.ResponseWriter, r *http.Request, sale sales.Sale) {
+			partials.SaleCart(sale).Render(r.Context(), w)
+		},
+		RenderSuggestions: func(w http.ResponseWriter, r *http.Request, saleID int64, list []sales.ProductSuggestion) {
+			partials.SaleSuggestions(saleID, list).Render(r.Context(), w)
+		},
+		RenderDetail: func(w http.ResponseWriter, r *http.Request, sale sales.Sale) {
+			sess := auth.FromContext(r.Context())
+			pages.SaleDetail(sess, sale).Render(r.Context(), w)
+		},
+		RenderReceipt: func(w http.ResponseWriter, r *http.Request, sale sales.Sale) {
+			pages.ReceiptPage(sale).Render(r.Context(), w)
+		},
+	}
+
+	// ---------- reports ----------
+	reportsHandler := &reports.Handler{
+		RenderReports: func(w http.ResponseWriter, r *http.Request, report reports.Report) {
+			sess := auth.FromContext(r.Context())
+			pages.ReportsPage(sess, report).Render(r.Context(), w)
+		},
+		RenderSummary: func(w http.ResponseWriter, r *http.Request, report reports.Report) {
+			pages.ReportsContent(report).Render(r.Context(), w)
+		},
+		RenderDash: func(w http.ResponseWriter, r *http.Request, dash reports.Dashboard) {
+			sess := auth.FromContext(r.Context())
+			pages.DashboardPage(sess, dash).Render(r.Context(), w)
+		},
+	}
+
 	// ---------- router ----------
 	r := chi.NewRouter()
 
@@ -148,10 +189,7 @@ func main() {
 	r.Group(func(pr chi.Router) {
 		pr.Use(sessionStore.RequireLogin)
 
-		pr.Get("/dashboard", func(w http.ResponseWriter, r *http.Request) {
-			sess := auth.FromContext(r.Context())
-			pages.Dashboard(sess).Render(r.Context(), w)
-		})
+		pr.Get("/dashboard", reportsHandler.Dashboard)
 
 		pr.Route("/products", func(pr chi.Router) {
 			pr.Get("/", productsHandler.Index)
@@ -165,7 +203,7 @@ func main() {
 			pr.Delete("/{id}", productsHandler.Delete)
 		})
 
-		// ---------- inventory routes ----------
+		// inventory
 		pr.Get("/inventory", invHandler.List)
 		pr.Get("/inventory/receive/{productID}", invHandler.ReceiveModal)
 		pr.Post("/inventory/receive/{productID}", invHandler.Receive)
@@ -173,7 +211,7 @@ func main() {
 		pr.Post("/inventory/adjust/{productID}", invHandler.Adjust)
 		pr.Get("/inventory/movements", invHandler.Movements)
 
-		// ---------- suppliers routes ----------
+		// suppliers
 		pr.Get("/suppliers", supHandler.Index)
 		pr.Get("/suppliers/new", supHandler.NewModal)
 		pr.Post("/suppliers", supHandler.Create)
@@ -181,6 +219,25 @@ func main() {
 		pr.Get("/suppliers/{id}/edit", supHandler.EditModal)
 		pr.Put("/suppliers/{id}", supHandler.Update)
 		pr.Delete("/suppliers/{id}", supHandler.Delete)
+
+		// sales
+		pr.Get("/sales", salesHandler.List)
+		pr.Get("/sales/new", salesHandler.NewSale)
+		pr.Get("/sales/search-products", salesHandler.SearchProducts)
+		pr.Post("/sales", salesHandler.Create)
+		pr.Get("/sales/{id}", salesHandler.Detail)
+		pr.Get("/sales/{id}/receipt", salesHandler.Receipt)
+		pr.Post("/sales/{id}/items", salesHandler.AddItem)
+		pr.Put("/sales/{id}/items/{itemID}", salesHandler.UpdateItemQty)
+		pr.Delete("/sales/{id}/items/{itemID}", salesHandler.RemoveItem)
+		pr.Put("/sales/{id}/discount", salesHandler.UpdateDiscount)
+		pr.Put("/sales/{id}/payment", salesHandler.UpdatePayment)
+		pr.Post("/sales/{id}/complete", salesHandler.Complete)
+		pr.Post("/sales/{id}/void", salesHandler.Void)
+
+		// reports
+		pr.Get("/reports", reportsHandler.Reports)
+		pr.Get("/reports/summary", reportsHandler.Summary)
 	})
 
 	port := os.Getenv("PORT")

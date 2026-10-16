@@ -1,0 +1,243 @@
+package pages
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/jmechavez/vapeshop/internal/auth"
+	"github.com/jmechavez/vapeshop/internal/reports"
+	"github.com/jmechavez/vapeshop/views/layouts"
+)
+
+templ ReportsPage(sess *auth.Session, report reports.Report) {
+	@layouts.Shell(sess, "Reports", displayName(sess)) {
+		<div class="p-6 space-y-4">
+			<div class="flex items-center justify-between">
+				<h1 class="text-xl font-semibold">Reports</h1>
+				<a href="/dashboard" class="text-sm text-blue-600 hover:underline">← Dashboard</a>
+			</div>
+
+			<form
+				method="get"
+				action="/reports"
+				class="flex flex-wrap gap-2 text-sm items-end"
+				hx-get="/reports/summary"
+				hx-target="#reports-content"
+				hx-swap="outerHTML"
+				hx-trigger="change from:input, change from:select"
+				hx-push-url="true"
+			>
+				<label class="flex flex-col">
+					<span class="text-xs text-gray-500">From</span>
+					<input
+						type="date"
+						name="from"
+						value={ report.Range.From }
+						class="border border-gray-300 rounded px-2 py-1"
+					/>
+				</label>
+				<label class="flex flex-col">
+					<span class="text-xs text-gray-500">To</span>
+					<input
+						type="date"
+						name="to"
+						value={ report.Range.To }
+						class="border border-gray-300 rounded px-2 py-1"
+					/>
+				</label>
+				<button type="submit" class="px-3 py-1 border border-gray-300 rounded">Apply</button>
+				<a href="/reports" class="px-3 py-1 text-gray-600 hover:underline">Reset</a>
+			</form>
+
+			@ReportsContent(report)
+		</div>
+	}
+}
+
+templ ReportsContent(report reports.Report) {
+	<div id="reports-content" class="space-y-4">
+		<!-- Summary cards -->
+		<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+			@summaryCard("Sales", strconv.Itoa(report.Summary.SalesCount))
+			@summaryCard("Items sold", strconv.Itoa(report.Summary.ItemsSold))
+			@summaryCard("Total", "₱"+fmt.Sprintf("%.2f", report.Payments.Total()))
+		</div>
+
+		<!-- Payment method breakdown -->
+		<div>
+			<h2 class="text-sm font-semibold text-gray-600 mb-2">Collected by payment method</h2>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+				@paymentCard("Cash", report.Payments.Cash)
+				@paymentCard("GCash", report.Payments.GCash)
+				@paymentCard("Maribank", report.Payments.Maribank)
+				@paymentCard("Bank Transfer", report.Payments.BankTransfer)
+			</div>
+		</div>
+
+		<!-- Daily chart -->
+		<div class="bg-white border border-gray-200 rounded p-4">
+			<div class="flex items-center justify-between mb-2">
+				<h2 class="font-semibold">Daily totals</h2>
+				<span class="text-xs text-gray-500">
+					{ report.Range.From } → { report.Range.To }
+				</span>
+			</div>
+			if len(report.Chart.Bars) == 0 {
+				<div class="p-6 text-center text-sm text-gray-500">No sales in this range.</div>
+			} else {
+				@dailyBarChart(report.Chart)
+			}
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<!-- Top products -->
+			<div class="bg-white border border-gray-200 rounded">
+				<div class="px-4 py-2 border-b border-gray-200 font-semibold">Top products</div>
+				if len(report.TopProducts) == 0 {
+					<div class="p-6 text-center text-sm text-gray-500">No items sold in this range.</div>
+				} else {
+					<table class="w-full text-sm">
+						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+							<tr>
+								<th class="px-3 py-2">SKU</th>
+								<th class="px-3 py-2">Product</th>
+								<th class="px-3 py-2 text-right">Qty</th>
+								<th class="px-3 py-2 text-right">Amount</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-100">
+							for _, p := range report.TopProducts {
+								<tr>
+									<td class="px-3 py-2 font-mono text-xs">{ p.SKU }</td>
+									<td class="px-3 py-2">{ p.Name }</td>
+									<td class="px-3 py-2 text-right">{ strconv.Itoa(p.QtySold) }</td>
+									<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", p.Revenue) }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+
+			<!-- Low stock -->
+			<div class="bg-white border border-gray-200 rounded">
+				<div class="px-4 py-2 border-b border-gray-200 font-semibold flex items-center justify-between">
+					<span>Low stock</span>
+					<a href="/inventory" class="text-xs text-blue-600 hover:underline">View inventory →</a>
+				</div>
+				if len(report.LowStock) == 0 {
+					<div class="p-6 text-center text-sm text-gray-500">All products are above their minimum.</div>
+				} else {
+					<table class="w-full text-sm">
+						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+							<tr>
+								<th class="px-3 py-2">SKU</th>
+								<th class="px-3 py-2">Product</th>
+								<th class="px-3 py-2 text-right">Stock</th>
+								<th class="px-3 py-2 text-right">Min</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-100">
+							for _, l := range report.LowStock {
+								<tr>
+									<td class="px-3 py-2 font-mono text-xs">{ l.SKU }</td>
+									<td class="px-3 py-2">{ l.Name }</td>
+									<td class="px-3 py-2 text-right text-red-600 font-semibold">
+										{ strconv.Itoa(l.CurrentStock) }
+									</td>
+									<td class="px-3 py-2 text-right text-gray-500">{ strconv.Itoa(l.MinimumStock) }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+		</div>
+
+		<!-- Recent sales -->
+		<div class="bg-white border border-gray-200 rounded">
+			<div class="px-4 py-2 border-b border-gray-200 font-semibold flex items-center justify-between">
+				<span>Recent sales</span>
+				<a href="/sales" class="text-xs text-blue-600 hover:underline">View all sales →</a>
+			</div>
+			if len(report.RecentSales) == 0 {
+				<div class="p-6 text-center text-sm text-gray-500">No sales yet.</div>
+			} else {
+				<table class="w-full text-sm">
+					<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+						<tr>
+							<th class="px-3 py-2">Reference</th>
+							<th class="px-3 py-2">Date</th>
+							<th class="px-3 py-2">Cashier</th>
+							<th class="px-3 py-2 text-right">Items</th>
+							<th class="px-3 py-2 text-right">Total</th>
+							<th class="px-3 py-2">Payment</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-gray-100">
+						for _, s := range report.RecentSales {
+							<tr>
+								<td class="px-3 py-2">
+									<a
+										href={ "/sales/" + strconv.FormatInt(s.ID, 10) }
+										class="text-blue-600 hover:underline font-mono text-xs"
+									>{ s.Reference }</a>
+								</td>
+								<td class="px-3 py-2">{ s.SaleDate.Format("2006-01-02 15:04") }</td>
+								<td class="px-3 py-2">{ s.CashierName }</td>
+								<td class="px-3 py-2 text-right">{ strconv.Itoa(s.ItemCount) }</td>
+								<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", s.Total) }</td>
+								<td class="px-3 py-2">{ s.PaymentMethod }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+		</div>
+	</div>
+}
+
+templ summaryCard(label string, value string) {
+	<div class="bg-white border border-gray-200 rounded p-3">
+		<div class="text-xs text-gray-500">{ label }</div>
+		<div class="text-lg font-semibold mt-1">{ value }</div>
+	</div>
+}
+
+templ dailyBarChart(c reports.Chart) {
+	<svg
+		viewBox={ fmt.Sprintf("0 0 %.0f %.0f", c.Width, c.Height) }
+		class="w-full"
+		preserveAspectRatio="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		<line
+			x1="0"
+			y1={ fmt.Sprintf("%.1f", c.ChartH) }
+			x2={ fmt.Sprintf("%.1f", c.Width) }
+			y2={ fmt.Sprintf("%.1f", c.ChartH) }
+			stroke="#e5e7eb"
+			stroke-width="1"
+		/>
+		for _, b := range c.Bars {
+			<rect
+				x={ fmt.Sprintf("%.1f", b.X) }
+				y={ fmt.Sprintf("%.1f", b.Y) }
+				width={ fmt.Sprintf("%.1f", b.Width) }
+				height={ fmt.Sprintf("%.1f", b.Height) }
+				fill="#111827"
+			>
+				<title>{ b.Label }</title>
+			</rect>
+		}
+	</svg>
+	<div class="flex justify-between text-xs text-gray-500 mt-1">
+		<span>{ c.Days[0].Day.Format("Jan 02") }</span>
+		if len(c.Days) > 2 {
+			<span>{ c.Days[len(c.Days)/2].Day.Format("Jan 02") }</span>
+		}
+		if len(c.Days) > 1 {
+			<span>{ c.Days[len(c.Days)-1].Day.Format("Jan 02") }</span>
+		}
+	</div>
+}

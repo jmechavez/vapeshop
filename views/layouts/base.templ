@@ -7,30 +7,155 @@ templ Base(title string) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title } - Drift Culture</title>
+			<link rel="icon" type="image/jpeg" href="/static/img/dc-logo.jpg"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link
+				href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600;700&display=swap"
+				rel="stylesheet"
+			/>
 			<link rel="stylesheet" href="/static/css/app.css"/>
 			<script src="/static/js/htmx.min.js"></script>
-
-			<!-- Small helper: shows delete errors in #flash -->
 			<script>
-				function handleSupplierDelete(event) {
+				/* ---- Modal helpers ---- */
+				function openModal(id) {
+					var el = document.getElementById(id);
+					if (!el) return;
+					el.classList.remove('hidden');
+					document.body.style.overflow = 'hidden';
+				}
+				function closeModal(id) {
+					var el = document.getElementById(id);
+					if (!el) return;
+					el.classList.add('hidden');
+					document.body.style.overflow = '';
+				}
+				function closeAllModals() {
+					document.querySelectorAll('[data-modal]:not(.hidden)').forEach(function (m) {
+						m.classList.add('hidden');
+					});
+					document.body.style.overflow = '';
+				}
+				document.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape') closeAllModals();
+				});
+				document.addEventListener('click', function (e) {
+					if (e.target && e.target.matches && e.target.matches('[data-modal]')) {
+						closeAllModals();
+					}
+				});
+				document.addEventListener('htmx:afterRequest', function (evt) {
+					var xhr = evt.detail && evt.detail.xhr;
+					if (!xhr) return;
+					if (xhr.status < 200 || xhr.status >= 300) return;
+
+					var verb = 'get';
+					if (evt.detail && evt.detail.requestConfig && evt.detail.requestConfig.verb) {
+						verb = String(evt.detail.requestConfig.verb).toLowerCase();
+					}
+					if (verb === 'get') return;
+
+					var t = evt.detail.target;
+					if (t && t.closest && t.closest('[data-modal]')) return;
+					closeAllModals();
+				});
+
+				/* ---- Custom Confirm Dialog ---- */
+				var _confirmCallback = null;
+				function openConfirm(opts) {
+					document.getElementById('confirm-title').innerText = opts.title || 'Are you sure?';
+					document.getElementById('confirm-msg').innerText = opts.message || 'This action cannot be undone.';
+
+					var btn = document.getElementById('confirm-btn-action');
+					btn.innerText = opts.confirmText || 'Confirm';
+
+					if (opts.destructive) {
+						btn.className = "min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-red-500 text-white font-semibold uppercase tracking-wide text-sm hover:bg-red-400 active:scale-95 transition";
+					} else {
+						btn.className = "min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition";
+					}
+
+					_confirmCallback = opts.onConfirm;
+					openModal('global-confirm-modal');
+				}
+
+				function execConfirm() {
+					closeModal('global-confirm-modal');
+					if (_confirmCallback) {
+						var cb = _confirmCallback;
+						_confirmCallback = null;
+						setTimeout(cb, 50);
+					}
+				}
+
+				/* ---- Flash / other helpers ---- */
+				function showFlash(html, variant) {
 					var flash = document.getElementById('flash');
 					if (!flash) return;
+					var cls = 'px-3 py-2 rounded-sm text-sm toast-in border ';
+					if (variant === 'error') {
+						cls += 'bg-red-500/10 border-red-500/40 text-red-500';
+					} else if (variant === 'success') {
+						cls += 'bg-emerald-500/10 border-emerald-500/40 text-emerald-500';
+					} else {
+						cls += 'bg-zinc-900 border-zinc-800 text-zinc-300';
+					}
+					flash.innerHTML = '<div class="' + cls + '">' + html + '</div>';
+					setTimeout(function () { flash.innerHTML = ''; }, 5000);
+				}
+
+				function handleSupplierDelete(event) {
 					var xhr = event.detail.xhr;
 					if (xhr.status >= 200 && xhr.status < 300) {
-						flash.innerHTML = '';
+						var flash = document.getElementById('flash');
+						if (flash) flash.innerHTML = '';
 						return;
 					}
 					var msg = (xhr.responseText || 'Delete failed.').trim();
-					flash.innerHTML =
-						'<div class="px-3 py-2 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-sm">' +
-						msg.replace(/[<>&]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }) +
-						'</div>';
-					setTimeout(function () { flash.innerHTML = ''; }, 5000);
+					msg = msg.replace(/[<>&]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+					showFlash(msg, 'error');
+				}
+
+				function toggleVoidNote(sel) {
+					var wrap = document.getElementById('void-note-wrap');
+					if (!wrap) return;
+					if (sel.value === 'Other') {
+						wrap.classList.remove('hidden');
+					} else {
+						wrap.classList.add('hidden');
+					}
 				}
 			</script>
 		</head>
-		<body class="bg-gray-50 text-gray-900 min-h-screen">
+		<body class="bg-zinc-950 text-white min-h-screen font-sans antialiased">
 			{ children... }
+
+			<!-- GLOBAL CONFIRM MODAL -->
+			<div id="global-confirm-modal" data-modal class="modal-backdrop hidden">
+				<div class="modal-panel max-w-sm">
+					<div class="p-5 space-y-4">
+						<h2 id="confirm-title" class="font-display italic uppercase tracking-wider text-lg text-white">Are you sure?</h2>
+						<p id="confirm-msg" class="text-sm text-zinc-400">This action cannot be undone.</p>
+						<div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+							<button
+								type="button"
+								onclick="closeModal('global-confirm-modal')"
+								class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								id="confirm-btn-action"
+								onclick="execConfirm()"
+								class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-red-500 text-white font-semibold uppercase tracking-wide text-sm hover:bg-red-400 active:scale-95 transition"
+							>
+								Confirm
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</body>
 	</html>
 }

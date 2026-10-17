@@ -1,5 +1,103 @@
 @import "tailwindcss";
 
-button, a[role="button"], .btn {
-  min-height: 44px;
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Russo One", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ---------- Base ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ---------- Toast / flash animation ---------- */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast-in {
+  animation: toast-in 180ms ease-out both;
+}
+
+/* ---------- Modal shell ---------- */
+/* Desktop: centered. Mobile: bottom sheet. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;          /* mobile: sheet from bottom */
+  justify-content: center;
+  padding: 0;
+}
+
+/* Hard override so Tailwind's `hidden` utility always wins. */
+.modal-backdrop.hidden {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .modal-backdrop {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+.modal-panel {
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: rgb(24 24 27);       /* zinc-900 */
+  border: 1px solid rgb(39 39 42); /* zinc-800 */
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 640px) {
+  .modal-panel {
+    max-width: 32rem;              /* sm: ~512px */
+    border-radius: 0.5rem;
+  }
+}
+
+/* Safe area for iOS bottom */
+.modal-panel {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---------- Sticky bottom bar ---------- */
+.sticky-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgb(39 39 42);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---------- Hide scrollbar utility ---------- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ---------- Print (used by receipt) ---------- */
+@media print {
+  body { background: white !important; color: black !important; }
+  .no-print { display: none !important; }
 }

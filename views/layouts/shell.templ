@@ -9,51 +9,187 @@ templ Shell(sess *auth.Session, title string, active string) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title } - Drift Culture</title>
+			<link rel="icon" type="image/jpeg" href="/static/img/dc-logo.jpg"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/app.css"/>
 			<script src="/static/js/htmx.min.js"></script>
+			<script>
+				function openModal(id) {
+					var el = document.getElementById(id);
+					if (el) { el.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+				}
+				function closeModal(id) {
+					var el = document.getElementById(id);
+					if (el) { el.classList.add('hidden'); document.body.style.overflow = ''; }
+				}
+				function closeAllModals() {
+					document.querySelectorAll('[data-modal]:not(.hidden)').forEach(function (m) { m.classList.add('hidden'); });
+					document.body.style.overflow = '';
+				}
+				document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAllModals(); });
+				document.addEventListener('click', function (e) { if (e.target && e.target.matches && e.target.matches('[data-modal]')) closeAllModals(); });
+
+				document.addEventListener('htmx:afterRequest', function (evt) {
+					var xhr = evt.detail && evt.detail.xhr;
+					if (!xhr) return;
+					if (xhr.status < 200 || xhr.status >= 300) return;
+					var verb = 'get';
+					if (evt.detail && evt.detail.requestConfig && evt.detail.requestConfig.verb) {
+						verb = String(evt.detail.requestConfig.verb).toLowerCase();
+					}
+					if (verb === 'get') return;
+					var t = evt.detail.target;
+					if (t && t.closest && t.closest('[data-modal]')) return;
+					closeAllModals();
+				});
+
+				var _confirmCallback = null;
+				function openConfirm(opts) {
+					document.getElementById('confirm-title').innerText = opts.title || 'Are you sure?';
+					document.getElementById('confirm-msg').innerText = opts.message || 'This action cannot be undone.';
+					var btn = document.getElementById('confirm-btn-action');
+					btn.innerText = opts.confirmText || 'Confirm';
+					if (opts.destructive) {
+						btn.className = "min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-red-500 text-white font-semibold uppercase tracking-wide text-sm hover:bg-red-400 active:scale-95 transition";
+					} else {
+						btn.className = "min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition";
+					}
+					_confirmCallback = opts.onConfirm;
+					openModal('global-confirm-modal');
+				}
+				function execConfirm() {
+					closeModal('global-confirm-modal');
+					if (_confirmCallback) { var cb = _confirmCallback; _confirmCallback = null; setTimeout(cb, 50); }
+				}
+
+				/* Global click handler for [data-confirm] buttons. */
+				document.addEventListener('click', function (e) {
+					var btn = e.target.closest('[data-confirm]');
+					if (!btn) return;
+					e.preventDefault();
+					var opts = {
+						title: btn.getAttribute('data-title') || 'Confirm',
+						message: btn.getAttribute('data-message') || 'Are you sure?',
+						confirmText: btn.getAttribute('data-confirm-text') || 'Confirm',
+						destructive: btn.getAttribute('data-destructive') === 'true',
+						onConfirm: function () {
+							var ajaxOpts = {
+								target: btn.getAttribute('data-target') || 'body',
+								swap: btn.getAttribute('data-swap') || 'outerHTML'
+							};
+							if (btn.getAttribute('data-handler') === 'supplier') ajaxOpts.handler = handleSupplierDelete;
+							htmx.ajax(btn.getAttribute('data-method') || 'DELETE', btn.getAttribute('data-url') || '#', ajaxOpts);
+						}
+					};
+					openConfirm(opts);
+				});
+
+				function showFlash(html, variant) {
+					var flash = document.getElementById('flash');
+					if (!flash) return;
+					var cls = 'px-3 py-2 rounded-sm text-sm toast-in border ';
+					if (variant === 'error') cls += 'bg-red-500/10 border-red-500/40 text-red-500';
+					else if (variant === 'success') cls += 'bg-emerald-500/10 border-emerald-500/40 text-emerald-500';
+					else cls += 'bg-zinc-900 border-zinc-800 text-zinc-300';
+					flash.innerHTML = '<div class="' + cls + '">' + html + '</div>';
+					setTimeout(function () { flash.innerHTML = ''; }, 5000);
+				}
+				function handleSupplierDelete(event) {
+					var xhr = event.detail.xhr;
+					if (xhr.status >= 200 && xhr.status < 300) {
+						var flash = document.getElementById('flash'); if (flash) flash.innerHTML = ''; return;
+					}
+					var msg = (xhr.responseText || 'Delete failed.').trim();
+					msg = msg.replace(/[<>&]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+					showFlash(msg, 'error');
+				}
+				function toggleVoidNote(sel) {
+					var wrap = document.getElementById('void-note-wrap'); if (!wrap) return;
+					if (sel.value === 'Other') wrap.classList.remove('hidden'); else wrap.classList.add('hidden');
+				}
+			</script>
 		</head>
-		<body class="bg-gray-50 text-gray-900 min-h-screen">
-			<header class="bg-white shadow-sm sticky top-0 z-30">
-				<div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-					<a href="/dashboard" class="text-lg font-bold">Drift Culture</a>
-					<div class="flex items-center gap-3">
-						<span class="text-xs text-gray-600 hidden sm:inline">
-							{ sess.FullName } ({ sess.Role })
-						</span>
-						<form method="POST" action="/logout">
-							<button type="submit"
-							        class="px-3 py-2 rounded-sm border border-gray-300 text-sm">
-								Logout
+		<body class="bg-zinc-950 text-white min-h-screen font-sans antialiased">
+			<header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-zinc-800">
+				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="flex items-center justify-between h-14 sm:h-16 gap-2">
+						<a href="/dashboard" class="flex items-center gap-2 shrink-0">
+							<img src="/static/img/dc-logo.jpg" alt="Drift Culture" class="h-9 w-9 sm:h-10 sm:w-10 rounded-sm object-cover mix-blend-screen"/>
+							<span class="font-display italic uppercase tracking-wider text-base sm:text-lg leading-none">Drift<span class="text-lime-400">Culture</span></span>
+						</a>
+						<nav class="hidden md:flex items-center gap-1 flex-1 justify-center">
+							@navLink("/dashboard", "Dashboard", active)
+							@navLink("/products", "Products", active)
+							@navLink("/inventory", "Inventory", active)
+							@navLink("/sales", "Sales", active)
+							@navLink("/suppliers", "Suppliers", active)
+							@navLink("/reports", "Reports", active)
+						</nav>
+						<div class="flex items-center gap-2">
+							<a href="/sales/new" class="inline-flex items-center justify-center h-10 w-10 rounded-sm border border-zinc-800 hover:border-lime-400/50 text-zinc-300 hover:text-lime-400 active:scale-95 transition" title="New sale">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+							</a>
+							<div class="hidden sm:flex items-center gap-2">
+								<span class="text-xs text-zinc-400">{ sess.FullName } <span class="text-zinc-600">({ sess.Role })</span></span>
+								<form method="POST" action="/logout"><button type="submit" class="min-h-[40px] px-3 py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Logout</button></form>
+							</div>
+							<button type="button" id="nav-toggle" class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition" aria-label="Toggle menu" aria-expanded="false">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
 							</button>
-						</form>
+						</div>
 					</div>
 				</div>
-				<nav class="border-t border-gray-100 overflow-x-auto">
-					<div class="max-w-6xl mx-auto px-4 flex gap-1 whitespace-nowrap">
-						@navLink("/dashboard", "Dashboard", active)
-						@navLink("/products", "Products", active)
-						@navLink("/inventory", "Inventory", active)
-						@navLink("/sales", "Sales", active)
-						@navLink("/suppliers", "Suppliers", active)
-						@navLink("/reports", "Reports", active)
-					</div>
-				</nav>
+				<div id="nav-drawer" class="hidden md:hidden border-t border-zinc-800 bg-black">
+					<nav class="px-4 py-3 flex flex-col gap-1">
+						@navLinkMobile("/dashboard", "Dashboard", active)
+						@navLinkMobile("/products", "Products", active)
+						@navLinkMobile("/inventory", "Inventory", active)
+						@navLinkMobile("/sales", "Sales", active)
+						@navLinkMobile("/suppliers", "Suppliers", active)
+						@navLinkMobile("/reports", "Reports", active)
+					</nav>
+				</div>
 			</header>
 
-			<main class="max-w-6xl mx-auto px-4 py-6">
+			<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+				<div id="flash" class="mb-4 empty:mb-0"></div>
 				{ children... }
 			</main>
+
+			<div id="global-confirm-modal" data-modal class="modal-backdrop hidden">
+				<div class="modal-panel max-w-sm">
+					<div class="p-5 space-y-4">
+						<h2 id="confirm-title" class="font-display italic uppercase tracking-wider text-lg text-white">Are you sure?</h2>
+						<p id="confirm-msg" class="text-sm text-zinc-400">This action cannot be undone.</p>
+						<div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+							<button type="button" onclick="closeModal('global-confirm-modal')" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Cancel</button>
+							<button type="button" id="confirm-btn-action" onclick="execConfirm()" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-red-500 text-white font-semibold uppercase tracking-wide text-sm hover:bg-red-400 active:scale-95 transition">Confirm</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<script>
+				(function () {
+					var btn = document.getElementById('nav-toggle');
+					var drawer = document.getElementById('nav-drawer');
+					if (!btn || !drawer) return;
+					btn.addEventListener('click', function () {
+						var open = !drawer.classList.contains('hidden');
+						drawer.classList.toggle('hidden', open);
+						btn.setAttribute('aria-expanded', String(!open));
+					});
+				})();
+			</script>
 		</body>
 	</html>
 }
 
 templ navLink(href, label, active string) {
-	<a href={ href }
-	   class={
-		   "px-4 py-3 text-sm font-medium border-b-2 flex items-center min-h-[44px]",
-		   templ.KV("border-black text-black", active == label),
-		   templ.KV("border-transparent text-gray-600", active != label),
-	   }>
-		{ label }
-	</a>
+	<a href={ templ.SafeURL(href) } class={ "px-3 lg:px-4 py-2 text-sm font-medium rounded-sm transition flex items-center", templ.KV("text-lime-400 bg-lime-400/5", active == label), templ.KV("text-zinc-400 hover:text-white hover:bg-zinc-900", active != label) }>{ label }</a>
+}
+templ navLinkMobile(href, label, active string) {
+	<a href={ templ.SafeURL(href) } class={ "min-h-[44px] px-4 py-3 rounded-sm text-base font-medium flex items-center transition", templ.KV("text-lime-400 bg-lime-400/5 border-l-2 border-lime-400", active == label), templ.KV("text-zinc-300 hover:text-white hover:bg-zinc-900", active != label) }>{ label }</a>
 }

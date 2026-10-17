@@ -8,39 +8,67 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const defaultPerPage = 25
+
 type Handler struct {
 	// All render functions are set by main.go.
-	RenderList     func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, q string)
-	RenderSearch   func(w http.ResponseWriter, r *http.Request, list []ProductWithStock)
-	RenderNewModal func(w http.ResponseWriter, r *http.Request, p Product, errMsg string)
-	RenderRow      func(w http.ResponseWriter, r *http.Request, p ProductWithStock)
-	RenderRowEdit  func(w http.ResponseWriter, r *http.Request, p ProductWithStock, errMsg string)
-	RenderOOBTable func(w http.ResponseWriter, r *http.Request, list []ProductWithStock)
-	RenderImport   func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, created int, failed []string)
+	RenderList      func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, q string, page Page)
+	RenderSearch    func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, q string, page Page)
+	RenderNewModal  func(w http.ResponseWriter, r *http.Request, p Product, errMsg string)
+	RenderEditModal func(w http.ResponseWriter, r *http.Request, p Product)
+	RenderRow       func(w http.ResponseWriter, r *http.Request, p ProductWithStock)
+	RenderRowEdit   func(w http.ResponseWriter, r *http.Request, p ProductWithStock, errMsg string)
+	RenderOOBTable  func(w http.ResponseWriter, r *http.Request, list []ProductWithStock)
+	RenderImport    func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, created int, failed []string)
+}
+
+func parsePage(r *http.Request) (q string, page int) {
+	q = strings.TrimSpace(r.URL.Query().Get("q"))
+	page, _ = strconv.Atoi(strings.TrimSpace(r.URL.Query().Get("page")))
+	if page < 1 {
+		page = 1
+	}
+	return
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query().Get("q")
-	list, err := List(r.Context(), q)
+	q, pageNum := parsePage(r)
+	list, total, err := List(r.Context(), q, pageNum, defaultPerPage)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	h.RenderList(w, r, list, q)
+	page := Page{Page: pageNum, PerPage: defaultPerPage, Total: total}
+	h.RenderList(w, r, list, q, page)
 }
 
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query().Get("q")
-	list, err := List(r.Context(), q)
+	q, pageNum := parsePage(r)
+	list, total, err := List(r.Context(), q, pageNum, defaultPerPage)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	h.RenderSearch(w, r, list)
+	page := Page{Page: pageNum, PerPage: defaultPerPage, Total: total}
+	h.RenderSearch(w, r, list, q, page)
 }
 
 func (h *Handler) NewModal(w http.ResponseWriter, r *http.Request) {
 	h.RenderNewModal(w, r, Product{}, "")
+}
+
+func (h *Handler) EditModal(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "bad id", http.StatusBadRequest)
+		return
+	}
+	p, err := Get(r.Context(), id)
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	h.RenderEditModal(w, r, p.Product)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -49,13 +77,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		h.RenderNewModal(w, r, *p, errMsg)
 		return
 	}
-
 	if _, err := Create(r.Context(), p); err != nil {
 		h.RenderNewModal(w, r, *p, err.Error())
 		return
 	}
-
-	list, err := List(r.Context(), "")
+	list, err := ListAll(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -144,7 +170,7 @@ func (h *Handler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		created++
 	}
 
-	list, _ := List(r.Context(), "")
+	list, _ := ListAll(r.Context())
 	h.RenderImport(w, r, list, created, failed)
 }
 

@@ -8,92 +8,110 @@ import (
 	"github.com/jmechavez/vapeshop/views/partials"
 )
 
-templ InventoryPage(sess *auth.Session, rows []inventory.InventoryRow) {
-	@layouts.Shell(sess, "Stock inventory", sess.FullName) {
-		<div class="flex items-center justify-between mb-6">
+templ InventoryPage(sess *auth.Session, rows []inventory.InventoryRow, filter inventory.ListFilter, page inventory.Page) {
+	@layouts.Shell(sess, "Inventory", "Inventory") {
+		<!-- Page header -->
+		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6">
 			<div>
-				<h1 class="text-2xl font-semibold text-slate-800">Inventory</h1>
-				<p class="text-sm text-slate-500 mt-1">Current stock for every active product.</p>
+				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">
+					Inventory
+				</h1>
+				<p class="text-sm text-zinc-400 mt-2">Current stock for every active product.</p>
 			</div>
 			<a
 				href="/inventory/movements"
-				class="px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700"
+				class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto"
 			>
 				View movements
 			</a>
 		</div>
 
-		@partials.InventoryTable(rows)
+		@partials.InventoryTable(rows, filter, page)
+
+		<!-- Modal host. MUST be present, MUST have this exact id. -->
 		<div id="modal-root"></div>
 	}
 }
 
 templ MovementsPage(sess *auth.Session, movements []inventory.Movement, filter inventory.MovementFilter) {
-	@layouts.Shell(sess, "Stock movements", sess.FullName) {
-		<div class="flex items-center justify-between mb-6">
+	@layouts.Shell(sess, "Stock movements", "Inventory") {
+		<!-- Page header -->
+		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6">
 			<div>
-				<h1 class="text-2xl font-semibold text-slate-800">Stock movements</h1>
-				<p class="text-sm text-slate-500 mt-1">History of every receive and adjust.</p>
+				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">
+					Stock Movements
+				</h1>
+				<p class="text-sm text-zinc-400 mt-2">History of every receive and adjust.</p>
 			</div>
 			<a
 				href="/inventory"
-				class="px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700"
+				class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto"
 			>
 				Back to inventory
 			</a>
 		</div>
 
+		<!-- Filters -->
 		<form
 			hx-get="/inventory/movements"
 			hx-target="#movements-table"
 			hx-swap="outerHTML"
 			hx-push-url="true"
-			class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 bg-white border border-slate-200 rounded-lg p-4"
+			class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 bg-zinc-900 border border-zinc-800 rounded-md p-4"
 		>
 			<div class="md:col-span-2">
-				<label class="block text-xs font-medium text-slate-600 mb-1">Search product (name or SKU)</label>
+				<label class="block text-xs font-medium text-zinc-400 mb-1">Search product (name or SKU)</label>
 				<input
 					type="text"
 					name="q"
 					value={ filter.Query }
 					placeholder="e.g. Elf Bar, ELF-BC-5000"
-					class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
 				/>
 			</div>
-
 			<div>
-				<label class="block text-xs font-medium text-slate-600 mb-1">Type</label>
-				<select name="type" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
+				<label class="block text-xs font-medium text-zinc-400 mb-1">Type</label>
+				<select
+					name="type"
+					class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
+				>
 					<option value="" selected?={ filter.Type == "" }>All types</option>
 					<option value="in" selected?={ filter.Type == "in" }>In</option>
 					<option value="out" selected?={ filter.Type == "out" }>Out</option>
 					<option value="adjust" selected?={ filter.Type == "adjust" }>Adjust</option>
 				</select>
 			</div>
-
 			<div>
-				<label class="block text-xs font-medium text-slate-600 mb-1">From</label>
+				<label class="block text-xs font-medium text-zinc-400 mb-1">From</label>
 				<input
 					type="date"
 					name="date_from"
 					value={ filter.DateFrom }
-					class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
 				/>
 			</div>
-
 			<div>
-				<label class="block text-xs font-medium text-slate-600 mb-1">To</label>
+				<label class="block text-xs font-medium text-zinc-400 mb-1">To</label>
 				<input
 					type="date"
 					name="date_to"
 					value={ filter.DateTo }
-					class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+					class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
 				/>
 			</div>
-
-			<div class="md:col-span-4 flex justify-end gap-2">
-				<a href="/inventory/movements" class="px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50">Clear</a>
-				<button type="submit" class="px-3 py-1.5 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700">Filter</button>
+			<div class="md:col-span-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+				<a
+					href="/inventory/movements"
+					class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition"
+				>
+					Clear
+				</a>
+				<button
+					type="submit"
+					class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition"
+				>
+					Filter
+				</button>
 			</div>
 		</form>
 

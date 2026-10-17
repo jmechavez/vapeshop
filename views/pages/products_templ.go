@@ -15,7 +15,7 @@ import (
 	"github.com/jmechavez/vapeshop/views/partials"
 )
 
-func Products(sess *auth.Session, list []products.ProductWithStock, q string) templ.Component {
+func Products(sess *auth.Session, list []products.ProductWithStock, q string, page products.Page) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -48,28 +48,28 @@ func Products(sess *auth.Session, list []products.ProductWithStock, q string) te
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4\"><h1 class=\"text-2xl font-semibold\">Products</h1><button hx-get=\"/products/new\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"px-4 py-3 rounded-sm bg-black text-white text-sm font-medium\">+ Add Product</button></div><div class=\"mb-4\"><input type=\"search\" name=\"q\" placeholder=\"Search name, SKU, brand...\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Page header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6\"><div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none\">Products</h1><p class=\"text-sm text-zinc-400 mt-2\">Manage your catalog.</p></div><div class=\"flex items-center gap-2\"><form hx-post=\"/products/import\" hx-encoding=\"multipart/form-data\" hx-target=\"#products-table\" hx-swap=\"outerHTML\" hx-trigger=\"change from:find input[type=file]\" class=\"contents\"><label class=\"relative min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition cursor-pointer\">Import CSV <input type=\"file\" name=\"csv\" accept=\".csv,text/csv\" style=\"position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;\"></label></form><button hx-get=\"/products/new\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-4 w-4\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line> <line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> Add Product</button></div></div><!-- Search --> <div class=\"mb-4 relative\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none\" style=\"width:1rem;height:1rem;\"><circle cx=\"11\" cy=\"11\" r=\"8\"></circle> <line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"></line></svg> <input type=\"search\" name=\"q\" placeholder=\"Search name, SKU, brand...\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(q)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/products.templ`, Line: 28, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/products.templ`, Line: 65, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" hx-get=\"/products/search\" hx-target=\"#products-table\" hx-swap=\"outerHTML\" hx-trigger=\"keyup changed delay:300ms, search\" class=\"w-full px-3 py-3 border border-gray-300 rounded-sm\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" hx-get=\"/products/search\" hx-target=\"#products-table\" hx-swap=\"outerHTML\" hx-trigger=\"keyup changed delay:300ms, search\" hx-push-url=\"true\" class=\"w-full text-base pl-10 pr-3 py-3 sm:py-2 bg-zinc-900 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = partials.ProductsTable(list).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = partials.ProductsTable(list, q, page).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div id=\"modal\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Modal host (server-rendered modals land here) --> <div id=\"modal\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

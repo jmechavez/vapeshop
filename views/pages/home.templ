@@ -4,18 +4,34 @@ import "github.com/jmechavez/vapeshop/views/layouts"
 
 templ Home() {
 	@layouts.Base("Home") {
-		<header class="bg-white shadow-sm">
-			<div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-				<h1 class="text-2xl font-bold">Drift Culture</h1>
-				<a href="/login"
-				   class="px-4 py-2 rounded-sm bg-black text-white flex items-center">
-					Login
-				</a>
+		<main class="min-h-screen flex items-center justify-center px-4 sm:px-6 py-12">
+			<div class="w-full max-w-md text-center">
+				<img
+					src="/static/img/dc-logo.jpg"
+					alt="Drift Culture"
+					class="h-24 w-24 sm:h-32 sm:w-32 object-contain rounded-md mx-auto mb-6"
+				/>
+				<h1 class="font-display italic uppercase tracking-wider text-3xl sm:text-4xl leading-none">
+					Drift<span class="text-lime-400">Culture</span>
+				</h1>
+				<p class="mt-3 text-zinc-400 text-sm sm:text-base">
+					Inventory &amp; POS for the shop.
+				</p>
+				<div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
+					<a
+						href="/login"
+						class="min-h-[44px] inline-flex items-center justify-center px-5 py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]"
+					>
+						Staff Login
+					</a>
+					<a
+						href="/dashboard"
+						class="min-h-[44px] inline-flex items-center justify-center px-5 py-3 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition"
+					>
+						Go to Dashboard
+					</a>
+				</div>
 			</div>
-		</header>
-		<main class="max-w-6xl mx-auto px-4 py-10">
-			<h2 class="text-3xl font-semibold mb-2">Welcome to Drift Culture</h2>
-			<p class="text-gray-600">Featured products coming soon.</p>
 		</main>
 	}
 }

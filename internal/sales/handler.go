@@ -8,24 +8,19 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-
 	"github.com/jmechavez/vapeshop/internal/auth"
 )
 
-// Handler holds render-function fields that are wired in cmd/server/main.go.
-// internal/sales must NOT import views/*.
+const defaultPerPage = 25
+
 type Handler struct {
-	RenderList        func(w http.ResponseWriter, r *http.Request, list []Sale, filter Filter)
+	RenderList        func(w http.ResponseWriter, r *http.Request, list []Sale, filter Filter, page Page)
 	RenderPOS         func(w http.ResponseWriter, r *http.Request, sale Sale)
 	RenderCart        func(w http.ResponseWriter, r *http.Request, sale Sale)
 	RenderSuggestions func(w http.ResponseWriter, r *http.Request, saleID int64, products []ProductSuggestion)
 	RenderDetail      func(w http.ResponseWriter, r *http.Request, sale Sale)
 	RenderReceipt     func(w http.ResponseWriter, r *http.Request, sale Sale)
 }
-
-// ---------------------------------------------------------------------------
-// Small helpers
-// ---------------------------------------------------------------------------
 
 func currentSession(r *http.Request) (*auth.Session, bool) {
 	sess := auth.FromContext(r.Context())
@@ -78,29 +73,29 @@ func (h *Handler) renderCart(w http.ResponseWriter, r *http.Request, saleID int6
 	h.RenderCart(w, r, sale)
 }
 
-// ---------------------------------------------------------------------------
-// GET /sales
-// ---------------------------------------------------------------------------
-
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
 	f := Filter{
-		Status:    r.URL.Query().Get("status"),
-		DateFrom:  r.URL.Query().Get("from"),
-		DateTo:    r.URL.Query().Get("to"),
-		Reference: r.URL.Query().Get("ref"),
+		Status:    q.Get("status"),
+		DateFrom:  q.Get("from"),
+		DateTo:    q.Get("to"),
+		Reference: q.Get("ref"),
 	}
-	list, err := List(r.Context(), f)
+	pageNum, _ := strconv.Atoi(q.Get("page"))
+	if pageNum < 1 {
+		pageNum = 1
+	}
+
+	list, total, err := List(r.Context(), f, pageNum, defaultPerPage)
 	if err != nil {
 		h.fail(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeHTML(w)
-	h.RenderList(w, r, list, f)
-}
 
-// ---------------------------------------------------------------------------
-// GET /sales/new
-// ---------------------------------------------------------------------------
+	page := Page{Page: pageNum, PerPage: defaultPerPage, Total: total}
+	writeHTML(w)
+	h.RenderList(w, r, list, f, page)
+}
 
 func (h *Handler) NewSale(w http.ResponseWriter, r *http.Request) {
 	sess, ok := currentSession(r)
@@ -141,10 +136,6 @@ func (h *Handler) NewSale(w http.ResponseWriter, r *http.Request) {
 	h.RenderPOS(w, r, sale)
 }
 
-// ---------------------------------------------------------------------------
-// POST /sales
-// ---------------------------------------------------------------------------
-
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	sess, ok := currentSession(r)
 	if !ok {
@@ -163,10 +154,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/sales/new?sale=%d", id), http.StatusSeeOther)
 }
 
-// ---------------------------------------------------------------------------
-// GET /sales/search-products
-// ---------------------------------------------------------------------------
-
 func (h *Handler) SearchProducts(w http.ResponseWriter, r *http.Request) {
 	saleID, _ := strconv.ParseInt(r.URL.Query().Get("sale"), 10, 64)
 	q := r.URL.Query().Get("q")
@@ -178,10 +165,6 @@ func (h *Handler) SearchProducts(w http.ResponseWriter, r *http.Request) {
 	writeHTML(w)
 	h.RenderSuggestions(w, r, saleID, products)
 }
-
-// ---------------------------------------------------------------------------
-// GET /sales/{id}
-// ---------------------------------------------------------------------------
 
 func (h *Handler) Detail(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
@@ -198,10 +181,6 @@ func (h *Handler) Detail(w http.ResponseWriter, r *http.Request) {
 	h.RenderDetail(w, r, sale)
 }
 
-// ---------------------------------------------------------------------------
-// GET /sales/{id}/receipt
-// ---------------------------------------------------------------------------
-
 func (h *Handler) Receipt(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -216,10 +195,6 @@ func (h *Handler) Receipt(w http.ResponseWriter, r *http.Request) {
 	writeHTML(w)
 	h.RenderReceipt(w, r, sale)
 }
-
-// ---------------------------------------------------------------------------
-// POST /sales/{id}/items
-// ---------------------------------------------------------------------------
 
 func (h *Handler) AddItem(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
@@ -249,10 +224,6 @@ func (h *Handler) AddItem(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/sales/new?sale=%d", id), http.StatusSeeOther)
 }
 
-// ---------------------------------------------------------------------------
-// PUT /sales/{id}/items/{itemID}
-// ---------------------------------------------------------------------------
-
 func (h *Handler) UpdateItemQty(w http.ResponseWriter, r *http.Request) {
 	saleID, err := parseID(r, "id")
 	if err != nil {
@@ -276,10 +247,6 @@ func (h *Handler) UpdateItemQty(w http.ResponseWriter, r *http.Request) {
 	h.renderCart(w, r, saleID)
 }
 
-// ---------------------------------------------------------------------------
-// DELETE /sales/{id}/items/{itemID}
-// ---------------------------------------------------------------------------
-
 func (h *Handler) RemoveItem(w http.ResponseWriter, r *http.Request) {
 	saleID, err := parseID(r, "id")
 	if err != nil {
@@ -297,10 +264,6 @@ func (h *Handler) RemoveItem(w http.ResponseWriter, r *http.Request) {
 	}
 	h.renderCart(w, r, saleID)
 }
-
-// ---------------------------------------------------------------------------
-// PUT /sales/{id}/discount
-// ---------------------------------------------------------------------------
 
 func (h *Handler) UpdateDiscount(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
@@ -320,10 +283,6 @@ func (h *Handler) UpdateDiscount(w http.ResponseWriter, r *http.Request) {
 	h.renderCart(w, r, id)
 }
 
-// ---------------------------------------------------------------------------
-// PUT /sales/{id}/payment
-// ---------------------------------------------------------------------------
-
 func (h *Handler) UpdatePayment(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -342,10 +301,6 @@ func (h *Handler) UpdatePayment(w http.ResponseWriter, r *http.Request) {
 	h.renderCart(w, r, id)
 }
 
-// ---------------------------------------------------------------------------
-// POST /sales/{id}/complete
-// ---------------------------------------------------------------------------
-
 func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 	sess, ok := currentSession(r)
 	if !ok {
@@ -361,12 +316,8 @@ func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 		h.handleRepoError(w, r, err)
 		return
 	}
-	redirectAfterAction(w, r, fmt.Sprintf("/sales/%d", id))
+	h.redirectAfterAction(w, r, fmt.Sprintf("/sales/%d", id))
 }
-
-// ---------------------------------------------------------------------------
-// POST /sales/{id}/void
-// ---------------------------------------------------------------------------
 
 func (h *Handler) Void(w http.ResponseWriter, r *http.Request) {
 	sess, ok := currentSession(r)
@@ -387,12 +338,10 @@ func (h *Handler) Void(w http.ResponseWriter, r *http.Request) {
 		h.handleRepoError(w, r, err)
 		return
 	}
-	redirectAfterAction(w, r, fmt.Sprintf("/sales/%d", id))
+	h.redirectAfterAction(w, r, fmt.Sprintf("/sales/%d", id))
 }
 
-// redirectAfterAction sends a normal 303 redirect for form posts, or an
-// HX-Redirect header for htmx posts so the browser navigates.
-func redirectAfterAction(w http.ResponseWriter, r *http.Request, url string) {
+func (h *Handler) redirectAfterAction(w http.ResponseWriter, r *http.Request, url string) {
 	if r.Header.Get("HX-Request") == "true" {
 		w.Header().Set("HX-Redirect", url)
 		w.WriteHeader(http.StatusOK)

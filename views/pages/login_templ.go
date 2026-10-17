@@ -43,19 +43,19 @@ func Login(errMsg string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"max-w-sm mx-auto px-4 py-16\"><h1 class=\"text-3xl font-bold mb-6 text-center\">Drift Culture</h1><h2 class=\"text-lg text-gray-600 mb-6 text-center\">Staff Login</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 bg-zinc-950\"><div class=\"w-full max-w-sm\"><!-- Logo / brand --><div class=\"flex flex-col items-center mb-6 sm:mb-8\"><img src=\"/static/img/dc-logo.jpg\" alt=\"Drift Culture\" class=\"h-24 w-24 sm:h-32 sm:w-32 object-contain rounded-md mb-4\"><h1 class=\"font-display italic uppercase tracking-wider text-3xl sm:text-4xl leading-none text-center\">Drift<span class=\"text-lime-400\">Culture</span></h1><p class=\"mt-2 text-sm text-zinc-400\">Staff Login</p></div><!-- Card --><div class=\"bg-zinc-900 border border-zinc-800 rounded-md p-5 sm:p-6 shadow-lg\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if errMsg != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"mb-4 px-4 py-3 rounded-sm bg-red-100 text-red-800 text-sm\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"mb-4 px-3 py-2 rounded-sm bg-red-500/10 border border-red-500/40 text-red-500 text-sm toast-in\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/login.templ`, Line: 13, Col: 13}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/login.templ`, Line: 26, Col: 15}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -66,7 +66,7 @@ func Login(errMsg string) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form method=\"POST\" action=\"/login\" class=\"space-y-4\"><div><label class=\"block text-sm font-medium mb-1\" for=\"username\">Username</label> <input id=\"username\" name=\"username\" type=\"text\" required autocomplete=\"username\" class=\"w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-black\"></div><div><label class=\"block text-sm font-medium mb-1\" for=\"password\">Password</label> <input id=\"password\" name=\"password\" type=\"password\" required autocomplete=\"current-password\" class=\"w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-black\"></div><button type=\"submit\" class=\"w-full py-3 rounded-sm bg-black text-white font-medium\">Sign in</button></form></main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form method=\"POST\" action=\"/login\" class=\"space-y-4\"><div><label for=\"username\" class=\"block text-sm font-medium text-zinc-300 mb-1\">Username</label> <input id=\"username\" name=\"username\" type=\"text\" required autocomplete=\"username\" class=\"w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"></div><div><label for=\"password\" class=\"block text-sm font-medium text-zinc-300 mb-1\">Password</label> <input id=\"password\" name=\"password\" type=\"password\" required autocomplete=\"current-password\" class=\"w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"></div><button type=\"submit\" class=\"w-full min-h-[44px] py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]\">Sign in</button></form></div><p class=\"mt-6 text-center text-xs text-zinc-600\">Drift Culture • Inventory &amp; POS</p></div></main>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

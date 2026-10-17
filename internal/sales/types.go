@@ -36,7 +36,6 @@ var Statuses = []string{
 }
 
 // VoidReasons is the preset list shown when voiding a sale.
-// "Other" is special: the UI shows a free-text box for it.
 var VoidReasons = []string{
 	"Customer changed mind",
 	"Wrong item",
@@ -45,7 +44,7 @@ var VoidReasons = []string{
 	"Other",
 }
 
-// Errors returned by the repository so handlers can map them to HTTP codes.
+// Errors returned by the repository.
 var (
 	ErrNotFound          = errors.New("sale not found")
 	ErrInvalidStatus     = errors.New("sale status does not allow this action")
@@ -54,13 +53,12 @@ var (
 	ErrVoidReasonMissing = errors.New("void reason is required")
 )
 
-// Sale represents one row in the sales table, plus a few joined/derived
-// fields used by the UI (CashierName, ItemCount, Items, VoidedByName).
+// Sale represents one row in the sales table.
 type Sale struct {
 	ID            int64
 	Reference     string
 	UserID        int64
-	CashierName   string // joined from users.username
+	CashierName   string
 	SaleDate      time.Time
 	Subtotal      float64
 	Discount      float64
@@ -69,18 +67,16 @@ type Sale struct {
 	Status        string
 	CreatedAt     time.Time
 
-	// Void info (only set when Status == StatusVoid)
 	VoidReason   string
 	VoidedBy     int64
-	VoidedByName string // joined from users.username
+	VoidedByName string
 	VoidedAt     *time.Time
 
-	// Filled by the detail page and the cart fragment. Empty on list rows.
 	Items     []SaleItem
-	ItemCount int // used on the list page (COUNT of sale_items)
+	ItemCount int
 }
 
-// SaleItem is one line in a sale (product + qty + price at time of sale).
+// SaleItem is one line in a sale.
 type SaleItem struct {
 	ID          int64
 	SaleID      int64
@@ -92,10 +88,9 @@ type SaleItem struct {
 	Subtotal    float64
 }
 
-// Filter is used by the list page. Dates are "YYYY-MM-DD" strings because
-// they come straight from <input type="date">.
+// Filter is used by the list page.
 type Filter struct {
-	Status    string // "" or "all" means no status filter
+	Status    string
 	DateFrom  string
 	DateTo    string
 	Reference string
@@ -116,8 +111,7 @@ type AddItemInput struct {
 	Quantity  int
 }
 
-// VoidInput carries the reason chosen by the user. Reason is the dropdown
-// value; if Reason == "Other", Note is used as the actual text.
+// VoidInput carries the reason chosen by the user.
 type VoidInput struct {
 	Reason string
 	Note   string
@@ -132,4 +126,37 @@ func (v VoidInput) FinalReason() string {
 		return "Other: " + v.Note
 	}
 	return v.Reason
+}
+
+// Page carries pagination metadata for the sales list.
+type Page struct {
+	Page    int
+	PerPage int
+	Total   int
+}
+
+func (p Page) HasPrev() bool { return p.Page > 1 }
+func (p Page) HasNext() bool { return p.Page*p.PerPage < p.Total }
+func (p Page) TotalPages() int {
+	if p.PerPage <= 0 {
+		return 1
+	}
+	t := (p.Total + p.PerPage - 1) / p.PerPage
+	if t < 1 {
+		return 1
+	}
+	return t
+}
+func (p Page) From() int {
+	if p.Total == 0 {
+		return 0
+	}
+	return (p.Page-1)*p.PerPage + 1
+}
+func (p Page) To() int {
+	end := p.Page * p.PerPage
+	if end > p.Total {
+		return p.Total
+	}
+	return end
 }

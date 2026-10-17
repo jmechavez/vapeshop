@@ -17,7 +17,7 @@ import (
 	"github.com/jmechavez/vapeshop/views/partials"
 )
 
-func InventoryPage(sess *auth.Session, rows []inventory.InventoryRow) templ.Component {
+func InventoryPage(sess *auth.Session, rows []inventory.InventoryRow, filter inventory.ListFilter, page inventory.Page) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -50,21 +50,21 @@ func InventoryPage(sess *auth.Session, rows []inventory.InventoryRow) templ.Comp
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-between mb-6\"><div><h1 class=\"text-2xl font-semibold text-slate-800\">Inventory</h1><p class=\"text-sm text-slate-500 mt-1\">Current stock for every active product.</p></div><a href=\"/inventory/movements\" class=\"px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700\">View movements</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Page header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6\"><div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none\">Inventory</h1><p class=\"text-sm text-zinc-400 mt-2\">Current stock for every active product.</p></div><a href=\"/inventory/movements\" class=\"min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto\">View movements</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = partials.InventoryTable(rows).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = partials.InventoryTable(rows, filter, page).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div id=\"modal-root\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<!-- Modal host. MUST be present, MUST have this exact id. --> <div id=\"modal-root\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layouts.Shell(sess, "Stock inventory", sess.FullName).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layouts.Shell(sess, "Inventory", "Inventory").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -105,20 +105,20 @@ func MovementsPage(sess *auth.Session, movements []inventory.Movement, filter in
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"flex items-center justify-between mb-6\"><div><h1 class=\"text-2xl font-semibold text-slate-800\">Stock movements</h1><p class=\"text-sm text-slate-500 mt-1\">History of every receive and adjust.</p></div><a href=\"/inventory\" class=\"px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700\">Back to inventory</a></div><form hx-get=\"/inventory/movements\" hx-target=\"#movements-table\" hx-swap=\"outerHTML\" hx-push-url=\"true\" class=\"grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 bg-white border border-slate-200 rounded-lg p-4\"><div class=\"md:col-span-2\"><label class=\"block text-xs font-medium text-slate-600 mb-1\">Search product (name or SKU)</label> <input type=\"text\" name=\"q\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Page header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6\"><div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none\">Stock Movements</h1><p class=\"text-sm text-zinc-400 mt-2\">History of every receive and adjust.</p></div><a href=\"/inventory\" class=\"min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto\">Back to inventory</a></div><!-- Filters --> <form hx-get=\"/inventory/movements\" hx-target=\"#movements-table\" hx-swap=\"outerHTML\" hx-push-url=\"true\" class=\"grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 bg-zinc-900 border border-zinc-800 rounded-md p-4\"><div class=\"md:col-span-2\"><label class=\"block text-xs font-medium text-zinc-400 mb-1\">Search product (name or SKU)</label> <input type=\"text\" name=\"q\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(filter.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/inventory.templ`, Line: 58, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/inventory.templ`, Line: 67, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" placeholder=\"e.g. Elf Bar, ELF-BC-5000\" class=\"w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm\"></div><div><label class=\"block text-xs font-medium text-slate-600 mb-1\">Type</label> <select name=\"type\" class=\"w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm\"><option value=\"\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" placeholder=\"e.g. Elf Bar, ELF-BC-5000\" class=\"w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"></div><div><label class=\"block text-xs font-medium text-zinc-400 mb-1\">Type</label> <select name=\"type\" class=\"w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"><option value=\"\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -158,33 +158,33 @@ func MovementsPage(sess *auth.Session, movements []inventory.Movement, filter in
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ">Adjust</option></select></div><div><label class=\"block text-xs font-medium text-slate-600 mb-1\">From</label> <input type=\"date\" name=\"date_from\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ">Adjust</option></select></div><div><label class=\"block text-xs font-medium text-zinc-400 mb-1\">From</label> <input type=\"date\" name=\"date_from\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(filter.DateFrom)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/inventory.templ`, Line: 79, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/inventory.templ`, Line: 89, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm\"></div><div><label class=\"block text-xs font-medium text-slate-600 mb-1\">To</label> <input type=\"date\" name=\"date_to\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"></div><div><label class=\"block text-xs font-medium text-zinc-400 mb-1\">To</label> <input type=\"date\" name=\"date_to\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(filter.DateTo)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/inventory.templ`, Line: 89, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/inventory.templ`, Line: 98, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm\"></div><div class=\"md:col-span-4 flex justify-end gap-2\"><a href=\"/inventory/movements\" class=\"px-3 py-1.5 text-sm rounded-md border border-slate-300 hover:bg-slate-50\">Clear</a> <button type=\"submit\" class=\"px-3 py-1.5 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700\">Filter</button></div></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition\"></div><div class=\"md:col-span-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2\"><a href=\"/inventory/movements\" class=\"min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition\">Clear</a> <button type=\"submit\" class=\"min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition\">Filter</button></div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -194,7 +194,7 @@ func MovementsPage(sess *auth.Session, movements []inventory.Movement, filter in
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layouts.Shell(sess, "Stock movements", sess.FullName).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layouts.Shell(sess, "Stock movements", "Inventory").Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -12,28 +12,61 @@ import (
 	"github.com/jmechavez/vapeshop/internal/auth"
 )
 
+const defaultPerPage = 25
+
 type Handler struct {
 	Repo *Repository
 
-	RenderList           func(w http.ResponseWriter, r *http.Request, rows []InventoryRow)
+	RenderList           func(w http.ResponseWriter, r *http.Request, rows []InventoryRow, filter ListFilter, page Page)
+	RenderListOOB        func(w http.ResponseWriter, r *http.Request, rows []InventoryRow)
 	RenderRow            func(w http.ResponseWriter, r *http.Request, row InventoryRow)
 	RenderReceiveModal   func(w http.ResponseWriter, r *http.Request, row InventoryRow, suppliers []Supplier)
 	RenderAdjustModal    func(w http.ResponseWriter, r *http.Request, row InventoryRow)
 	RenderMovements      func(w http.ResponseWriter, r *http.Request, movements []Movement, filter MovementFilter)
-	RenderMovementsTable func(w http.ResponseWriter, r *http.Request, movements []Movement) // NEW
+	RenderMovementsTable func(w http.ResponseWriter, r *http.Request, movements []Movement)
 }
 
-// List GET /inventory
+// parseListFilter reads ?q=, ?low=, ?page= into a ListFilter.
+func parseListFilter(r *http.Request) ListFilter {
+	q := r.URL.Query()
+	page, _ := strconv.Atoi(strings.TrimSpace(q.Get("page")))
+	if page < 1 {
+		page = 1
+	}
+	isTruthy := func(v string) bool { return v == "1" || v == "true" || v == "on" }
+	return ListFilter{
+		Query:   strings.TrimSpace(q.Get("q")),
+		LowOnly: isTruthy(q.Get("low")),
+		Page:    page,
+		PerPage: defaultPerPage,
+	}
+}
+
+// List GET /inventory — full page.
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.Repo.List(r.Context())
+	f := parseListFilter(r)
+	rows, total, err := h.Repo.List(r.Context(), f)
 	if err != nil {
 		http.Error(w, "failed to load inventory: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	h.RenderList(w, r, rows)
+	page := Page{Page: f.Page, PerPage: f.PerPage, Total: total}
+	h.RenderList(w, r, rows, f, page)
 }
 
-// ReceiveModal GET /inventory/receive/{productID}
+// Search GET /inventory/search — htmx fragment used by live search, filter,
+// and pagination.
+func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
+	f := parseListFilter(r)
+	rows, total, err := h.Repo.List(r.Context(), f)
+	if err != nil {
+		http.Error(w, "failed to search inventory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	page := Page{Page: f.Page, PerPage: f.PerPage, Total: total}
+	h.RenderList(w, r, rows, f, page)
+}
+
 func (h *Handler) ReceiveModal(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
@@ -57,7 +90,6 @@ func (h *Handler) ReceiveModal(w http.ResponseWriter, r *http.Request) {
 	h.RenderReceiveModal(w, r, row, suppliers)
 }
 
-// Receive POST /inventory/receive/{productID}
 func (h *Handler) Receive(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
@@ -104,15 +136,14 @@ func (h *Handler) Receive(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to receive stock: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	row, err := h.Repo.GetRow(r.Context(), id)
+	rows, err := h.Repo.ListAll(r.Context())
 	if err != nil {
-		http.Error(w, "saved but failed to reload row: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "saved but failed to reload list: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	h.RenderRow(w, r, row)
+	h.RenderListOOB(w, r, rows)
 }
 
-// AdjustModal GET /inventory/adjust/{productID}
 func (h *Handler) AdjustModal(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
@@ -131,7 +162,6 @@ func (h *Handler) AdjustModal(w http.ResponseWriter, r *http.Request) {
 	h.RenderAdjustModal(w, r, row)
 }
 
-// Adjust POST /inventory/adjust/{productID}
 func (h *Handler) Adjust(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
@@ -159,34 +189,27 @@ func (h *Handler) Adjust(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to adjust stock: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	row, err := h.Repo.GetRow(r.Context(), id)
+	rows, err := h.Repo.ListAll(r.Context())
 	if err != nil {
-		http.Error(w, "saved but failed to reload row: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "saved but failed to reload list: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	h.RenderRow(w, r, row)
+	h.RenderListOOB(w, r, rows)
 }
 
-// Movements GET /inventory/movements
-//
-// If the request is an htmx request, returns only the table (partial).
-// Otherwise returns the full page.
 func (h *Handler) Movements(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-
 	filter := MovementFilter{
 		Query:    strings.TrimSpace(q.Get("q")),
 		Type:     strings.TrimSpace(q.Get("type")),
 		DateFrom: strings.TrimSpace(q.Get("date_from")),
 		DateTo:   strings.TrimSpace(q.Get("date_to")),
 	}
-
 	movements, err := h.Repo.Movements(r.Context(), filter)
 	if err != nil {
 		http.Error(w, "failed to load movements: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	if r.Header.Get("HX-Request") == "true" {
 		h.RenderMovementsTable(w, r, movements)
 		return

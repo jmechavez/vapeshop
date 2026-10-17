@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jmechavez/vapeshop/internal/sales"
 )
@@ -43,262 +44,151 @@ func ReceiptPage(sale sales.Sale) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs("Receipt " + sale.Reference)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 16, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 17, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"stylesheet\" href=\"/static/css/app.css\"><style>\n\t\t\t@media print {\n\t\t\t\t.no-print { display: none !important; }\n\t\t\t\tbody { margin: 0; }\n\t\t\t\t.receipt { box-shadow: none !important; border: none !important; }\n\t\t\t}\n\t\t</style></head><body class=\"bg-gray-100 min-h-screen\"><div class=\"no-print max-w-md mx-auto pt-4 px-4 flex items-center justify-between text-sm\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/jpeg\" href=\"/static/img/dc-logo.jpg\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"><style>\n\t\t\t\t@media print {\n\t\t\t\t\t.no-print { display: none !important; }\n\t\t\t\t\tbody { margin: 0; background: white !important; }\n\t\t\t\t\t.receipt-text {\n\t\t\t\t\t\tbox-shadow: none !important;\n\t\t\t\t\t\tborder: none !important;\n\t\t\t\t\t\tmax-width: 100% !important;\n\t\t\t\t\t\tmargin: 0 !important;\n\t\t\t\t\t\tpadding: 0 !important;\n\t\t\t\t\t}\n\t\t\t\t\t@page { margin: 12mm; }\n\t\t\t\t}\n\t\t\t</style></head><body class=\"bg-zinc-950 text-white min-h-screen font-sans antialiased\"><!-- Screen-only chrome --><div class=\"no-print max-w-md mx-auto pt-4 px-4 flex items-center justify-between gap-3\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL("/sales/" + strconv.FormatInt(sale.ID, 10)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 28, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 39, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" class=\"text-blue-600 hover:underline\">← Back to sale</a> <button type=\"button\" class=\"px-3 py-1 bg-black text-white rounded\" onclick=\"window.print()\">Print</button></div><div class=\"receipt max-w-md mx-auto my-4 bg-white border border-gray-300 rounded p-6 text-sm\"><div class=\"text-center border-b border-dashed border-gray-300 pb-3\"><div class=\"text-lg font-bold\">Drift Culture</div><div class=\"text-xs text-gray-600\">Vape Shop</div></div><div class=\"py-3 border-b border-dashed border-gray-300 text-xs space-y-1\"><div class=\"flex justify-between\"><span class=\"text-gray-500\">Reference</span> <span class=\"font-mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-3 py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition\">← Back to sale</a> <button type=\"button\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition\" onclick=\"window.print()\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-4 w-4\"><polyline points=\"6 9 6 2 18 2 18 9\"></polyline> <path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"></path> <rect x=\"6\" y=\"14\" width=\"12\" height=\"8\"></rect></svg> Print</button></div><!-- Plain-text receipt --><div class=\"receipt-text max-w-md mx-auto my-4 sm:my-8 bg-white text-black border border-zinc-200 rounded-md p-6 sm:p-8 shadow-xl\"><pre class=\"font-mono text-xs leading-tight whitespace-pre overflow-x-auto m-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(sale.Reference)
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(receiptText(sale))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 47, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 60, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div><div class=\"flex justify-between\"><span class=\"text-gray-500\">Date</span> <span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(sale.SaleDate.Format("2006-01-02 15:04"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 51, Col: 53}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span></div><div class=\"flex justify-between\"><span class=\"text-gray-500\">Cashier</span> <span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(sale.CashierName)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 55, Col: 29}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></div><div class=\"flex justify-between\"><span class=\"text-gray-500\">Payment</span> <span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(sale.PaymentMethod)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 59, Col: 31}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span></div><div class=\"flex justify-between\"><span class=\"text-gray-500\">Status</span> <span class=\"uppercase\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(sale.Status)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 63, Col: 42}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span></div></div><table class=\"w-full text-xs py-3\"><thead><tr class=\"border-b border-dashed border-gray-300\"><th class=\"text-left py-1\">Item</th><th class=\"text-right py-1\">Qty</th><th class=\"text-right py-1\">Price</th><th class=\"text-right py-1\">Sub</th></tr></thead> <tbody>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		for _, it := range sale.Items {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<tr><td class=\"py-1\"><div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(it.ProductName)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 80, Col: 29}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><div class=\"text-gray-500 font-mono\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(it.SKU)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 81, Col: 53}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></td><td class=\"text-right py-1 align-top\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(it.Quantity))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 83, Col: 72}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</td><td class=\"text-right py-1 align-top\">₱")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", it.UnitPrice))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 84, Col: 83}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</td><td class=\"text-right py-1 align-top\">₱")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", it.Subtotal))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 85, Col: 82}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</td></tr>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</tbody></table><div class=\"border-t border-dashed border-gray-300 pt-3 text-xs space-y-1\"><div class=\"flex justify-between\"><span class=\"text-gray-500\">Subtotal</span> <span>₱")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", sale.Subtotal))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 94, Col: 50}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span></div><div class=\"flex justify-between\"><span class=\"text-gray-500\">Discount</span> <span>-₱")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", sale.Discount))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 98, Col: 51}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span></div><div class=\"flex justify-between font-bold text-base pt-1 border-t border-gray-300 mt-1\"><span>Total</span> <span>₱")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", sale.Total))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 102, Col: 47}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</span></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if sale.Status == "void" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"mt-3 p-2 bg-red-50 border border-red-200 text-xs text-red-700 rounded\"><div class=\"font-semibold\">VOIDED</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if sale.VoidReason != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div>Reason: ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var17 string
-				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(sale.VoidReason)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 110, Col: 36}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			if sale.VoidedByName != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div>By: ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var18 string
-				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(sale.VoidedByName)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/receipt.templ`, Line: 113, Col: 34}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"text-center text-xs text-gray-500 mt-6 border-t border-dashed border-gray-300 pt-3\">Thank you!</div></div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</pre></div><div class=\"no-print h-6 sm:h-12\"></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		return nil
 	})
+}
+
+// receiptText builds the full receipt body as a single fixed-width string.
+// 40 columns wide, compatible with 80mm thermal printers and any screen.
+func receiptText(sale sales.Sale) string {
+	const width = 40
+	var b strings.Builder
+
+	line := func(s string) { b.WriteString(s); b.WriteString("\n") }
+	blank := func() { b.WriteString("\n") }
+
+	// Center helper (pads with spaces to width).
+	center := func(s string) string {
+		if len(s) >= width {
+			return s
+		}
+		pad := (width - len(s)) / 2
+		return strings.Repeat(" ", pad) + s
+	}
+
+	// Left+right justify helper (left on left, right on right).
+	justify := func(left, right string) string {
+		gap := width - len(left) - len(right)
+		if gap < 1 {
+			gap = 1
+		}
+		return left + strings.Repeat(" ", gap) + right
+	}
+
+	// Left + fixed columns helper (for item lines).
+	// Format: ITEMNAME......   QTY    PRICE    SUBTOTAL
+	itemLine := func(name, sku string, qty int, unit, sub float64) string {
+		// Name line (truncate if too long)
+		n := name
+		if len(n) > width {
+			n = n[:width]
+		}
+		b.WriteString(n)
+		b.WriteString("\n")
+		// SKU line (indented)
+		b.WriteString("  ")
+		b.WriteString(sku)
+		b.WriteString("\n")
+		// Qty / price / sub line
+		qtyStr := fmt.Sprintf("x%d", qty)
+		unitStr := fmt.Sprintf("%.2f", unit)
+		subStr := fmt.Sprintf("%.2f", sub)
+		left := "  " + qtyStr
+		right := unitStr + "  " + subStr
+		line(justify(left, right))
+		return ""
+	}
+
+	rule := strings.Repeat("-", width)
+	equalRule := strings.Repeat("=", width)
+
+	// ---- Header ----
+	line(equalRule)
+	line(center("DRIFT CULTURE"))
+	line(center("Vape Shop"))
+	line(equalRule)
+	blank()
+
+	// ---- Meta ----
+	line(justify("Ref:", sale.Reference))
+	line(justify("Date:", sale.SaleDate.Format("2006-01-02 15:04")))
+	line(justify("Cashier:", sale.CashierName))
+	line(justify("Payment:", sale.PaymentMethod))
+	line(justify("Status:", strings.ToUpper(sale.Status)))
+	blank()
+	line(rule)
+
+	// ---- Items ----
+	for _, it := range sale.Items {
+		itemLine(it.ProductName, it.SKU, it.Quantity, it.UnitPrice, it.Subtotal)
+	}
+	line(rule)
+
+	// ---- Totals ----
+	line(justify("Subtotal", fmt.Sprintf("PHP %.2f", sale.Subtotal)))
+	line(justify("Discount", fmt.Sprintf("-PHP %.2f", sale.Discount)))
+	line(equalRule)
+	line(justify("TOTAL", fmt.Sprintf("PHP %.2f", sale.Total)))
+	line(equalRule)
+	blank()
+
+	// ---- Void banner ----
+	if sale.Status == "void" {
+		line(center("*** VOIDED ***"))
+		if sale.VoidReason != "" {
+			line("Reason: " + sale.VoidReason)
+		}
+		if sale.VoidedByName != "" {
+			line("By: " + sale.VoidedByName)
+		}
+		if sale.VoidedAt != nil {
+			line("At: " + sale.VoidedAt.Format("2006-01-02 15:04"))
+		}
+		blank()
+	}
+
+	// ---- Footer ----
+	line(center("Thank you!"))
+	line(center("Please keep this receipt."))
+	line(equalRule)
+
+	return b.String()
 }
 
 var _ = templruntime.GeneratedTemplate

@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jmechavez/vapeshop/internal/sales"
 )
@@ -10,115 +11,163 @@ import (
 templ ReceiptPage(sale sales.Sale) {
 	<!DOCTYPE html>
 	<html lang="en">
-	<head>
-		<meta charset="utf-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1"/>
-		<title>{ "Receipt " + sale.Reference }</title>
-		<link rel="stylesheet" href="/static/css/app.css"/>
-		<style>
-			@media print {
-				.no-print { display: none !important; }
-				body { margin: 0; }
-				.receipt { box-shadow: none !important; border: none !important; }
-			}
-		</style>
-	</head>
-	<body class="bg-gray-100 min-h-screen">
-		<div class="no-print max-w-md mx-auto pt-4 px-4 flex items-center justify-between text-sm">
-			<a href={ templ.URL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="text-blue-600 hover:underline">
-				← Back to sale
-			</a>
-			<button
-				type="button"
-				class="px-3 py-1 bg-black text-white rounded"
-				onclick="window.print()"
-			>Print</button>
-		</div>
-
-		<div class="receipt max-w-md mx-auto my-4 bg-white border border-gray-300 rounded p-6 text-sm">
-			<div class="text-center border-b border-dashed border-gray-300 pb-3">
-				<div class="text-lg font-bold">Drift Culture</div>
-				<div class="text-xs text-gray-600">Vape Shop</div>
-			</div>
-
-			<div class="py-3 border-b border-dashed border-gray-300 text-xs space-y-1">
-				<div class="flex justify-between">
-					<span class="text-gray-500">Reference</span>
-					<span class="font-mono">{ sale.Reference }</span>
-				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-500">Date</span>
-					<span>{ sale.SaleDate.Format("2006-01-02 15:04") }</span>
-				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-500">Cashier</span>
-					<span>{ sale.CashierName }</span>
-				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-500">Payment</span>
-					<span>{ sale.PaymentMethod }</span>
-				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-500">Status</span>
-					<span class="uppercase">{ sale.Status }</span>
-				</div>
-			</div>
-
-			<table class="w-full text-xs py-3">
-				<thead>
-					<tr class="border-b border-dashed border-gray-300">
-						<th class="text-left py-1">Item</th>
-						<th class="text-right py-1">Qty</th>
-						<th class="text-right py-1">Price</th>
-						<th class="text-right py-1">Sub</th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, it := range sale.Items {
-						<tr>
-							<td class="py-1">
-								<div>{ it.ProductName }</div>
-								<div class="text-gray-500 font-mono">{ it.SKU }</div>
-							</td>
-							<td class="text-right py-1 align-top">{ strconv.Itoa(it.Quantity) }</td>
-							<td class="text-right py-1 align-top">₱{ fmt.Sprintf("%.2f", it.UnitPrice) }</td>
-							<td class="text-right py-1 align-top">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</td>
-						</tr>
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ "Receipt " + sale.Reference }</title>
+			<link rel="icon" type="image/jpeg" href="/static/img/dc-logo.jpg"/>
+			<link rel="stylesheet" href="/static/css/app.css"/>
+			<style>
+				@media print {
+					.no-print { display: none !important; }
+					body { margin: 0; background: white !important; }
+					.receipt-text {
+						box-shadow: none !important;
+						border: none !important;
+						max-width: 100% !important;
+						margin: 0 !important;
+						padding: 0 !important;
 					}
-				</tbody>
-			</table>
-
-			<div class="border-t border-dashed border-gray-300 pt-3 text-xs space-y-1">
-				<div class="flex justify-between">
-					<span class="text-gray-500">Subtotal</span>
-					<span>₱{ fmt.Sprintf("%.2f", sale.Subtotal) }</span>
-				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-500">Discount</span>
-					<span>-₱{ fmt.Sprintf("%.2f", sale.Discount) }</span>
-				</div>
-				<div class="flex justify-between font-bold text-base pt-1 border-t border-gray-300 mt-1">
-					<span>Total</span>
-					<span>₱{ fmt.Sprintf("%.2f", sale.Total) }</span>
-				</div>
+					@page { margin: 12mm; }
+				}
+			</style>
+		</head>
+		<body class="bg-zinc-950 text-white min-h-screen font-sans antialiased">
+			<!-- Screen-only chrome -->
+			<div class="no-print max-w-md mx-auto pt-4 px-4 flex items-center justify-between gap-3">
+				<a
+					href={ templ.URL("/sales/" + strconv.FormatInt(sale.ID, 10)) }
+					class="min-h-[44px] inline-flex items-center justify-center gap-2 px-3 py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition"
+				>
+					← Back to sale
+				</a>
+				<button
+					type="button"
+					class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition"
+					onclick="window.print()"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+						<polyline points="6 9 6 2 18 2 18 9"></polyline>
+						<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+						<rect x="6" y="14" width="12" height="8"></rect>
+					</svg>
+					Print
+				</button>
 			</div>
 
-			if sale.Status == "void" {
-				<div class="mt-3 p-2 bg-red-50 border border-red-200 text-xs text-red-700 rounded">
-					<div class="font-semibold">VOIDED</div>
-					if sale.VoidReason != "" {
-						<div>Reason: { sale.VoidReason }</div>
-					}
-					if sale.VoidedByName != "" {
-						<div>By: { sale.VoidedByName }</div>
-					}
-				</div>
-			}
-
-			<div class="text-center text-xs text-gray-500 mt-6 border-t border-dashed border-gray-300 pt-3">
-				Thank you!
+			<!-- Plain-text receipt -->
+			<div class="receipt-text max-w-md mx-auto my-4 sm:my-8 bg-white text-black border border-zinc-200 rounded-md p-6 sm:p-8 shadow-xl">
+				<pre class="font-mono text-xs leading-tight whitespace-pre overflow-x-auto m-0">{ receiptText(sale) }</pre>
 			</div>
-		</div>
-	</body>
+
+			<div class="no-print h-6 sm:h-12"></div>
+		</body>
 	</html>
+}
+
+// receiptText builds the full receipt body as a single fixed-width string.
+// 40 columns wide, compatible with 80mm thermal printers and any screen.
+func receiptText(sale sales.Sale) string {
+	const width = 40
+	var b strings.Builder
+
+	line := func(s string) { b.WriteString(s); b.WriteString("\n") }
+	blank := func() { b.WriteString("\n") }
+
+	// Center helper (pads with spaces to width).
+	center := func(s string) string {
+		if len(s) >= width {
+			return s
+		}
+		pad := (width - len(s)) / 2
+		return strings.Repeat(" ", pad) + s
+	}
+
+	// Left+right justify helper (left on left, right on right).
+	justify := func(left, right string) string {
+		gap := width - len(left) - len(right)
+		if gap < 1 {
+			gap = 1
+		}
+		return left + strings.Repeat(" ", gap) + right
+	}
+
+	// Left + fixed columns helper (for item lines).
+	// Format: ITEMNAME......   QTY    PRICE    SUBTOTAL
+	itemLine := func(name, sku string, qty int, unit, sub float64) string {
+		// Name line (truncate if too long)
+		n := name
+		if len(n) > width {
+			n = n[:width]
+		}
+		b.WriteString(n)
+		b.WriteString("\n")
+		// SKU line (indented)
+		b.WriteString("  ")
+		b.WriteString(sku)
+		b.WriteString("\n")
+		// Qty / price / sub line
+		qtyStr := fmt.Sprintf("x%d", qty)
+		unitStr := fmt.Sprintf("%.2f", unit)
+		subStr := fmt.Sprintf("%.2f", sub)
+		left := "  " + qtyStr
+		right := unitStr + "  " + subStr
+		line(justify(left, right))
+		return ""
+	}
+
+	rule := strings.Repeat("-", width)
+	equalRule := strings.Repeat("=", width)
+
+	// ---- Header ----
+	line(equalRule)
+	line(center("DRIFT CULTURE"))
+	line(center("Vape Shop"))
+	line(equalRule)
+	blank()
+
+	// ---- Meta ----
+	line(justify("Ref:", sale.Reference))
+	line(justify("Date:", sale.SaleDate.Format("2006-01-02 15:04")))
+	line(justify("Cashier:", sale.CashierName))
+	line(justify("Payment:", sale.PaymentMethod))
+	line(justify("Status:", strings.ToUpper(sale.Status)))
+	blank()
+	line(rule)
+
+	// ---- Items ----
+	for _, it := range sale.Items {
+		itemLine(it.ProductName, it.SKU, it.Quantity, it.UnitPrice, it.Subtotal)
+	}
+	line(rule)
+
+	// ---- Totals ----
+	line(justify("Subtotal", fmt.Sprintf("PHP %.2f", sale.Subtotal)))
+	line(justify("Discount", fmt.Sprintf("-PHP %.2f", sale.Discount)))
+	line(equalRule)
+	line(justify("TOTAL", fmt.Sprintf("PHP %.2f", sale.Total)))
+	line(equalRule)
+	blank()
+
+	// ---- Void banner ----
+	if sale.Status == "void" {
+		line(center("*** VOIDED ***"))
+		if sale.VoidReason != "" {
+			line("Reason: " + sale.VoidReason)
+		}
+		if sale.VoidedByName != "" {
+			line("By: " + sale.VoidedByName)
+		}
+		if sale.VoidedAt != nil {
+			line("At: " + sale.VoidedAt.Format("2006-01-02 15:04"))
+		}
+		blank()
+	}
+
+	// ---- Footer ----
+	line(center("Thank you!"))
+	line(center("Please keep this receipt."))
+	line(equalRule)
+
+	return b.String()
 }

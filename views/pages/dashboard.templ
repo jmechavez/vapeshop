@@ -2,92 +2,222 @@ package pages
 
 import (
 	"fmt"
-	"strconv"
+	"time"
 
 	"github.com/jmechavez/vapeshop/internal/auth"
 	"github.com/jmechavez/vapeshop/internal/reports"
 	"github.com/jmechavez/vapeshop/views/layouts"
 )
 
+// ---- Local formatting helpers ----
+
+func fmtMoney(v float64) string {
+	return fmt.Sprintf("₱%.2f", v)
+}
+
+func fmtDate(t time.Time) string {
+	return t.Format("Jan 02, 3:04 PM")
+}
+
+// displayName returns a human-friendly name for the shell.
+// Shared by every page in the `pages` package.
+func displayName(sess *auth.Session) string {
+	if sess == nil {
+		return ""
+	}
+	if sess.FullName != "" {
+		return sess.FullName
+	}
+	return sess.Username
+}
+
+// ---- Dashboard page ----
+
 templ DashboardPage(sess *auth.Session, dash reports.Dashboard) {
-	@layouts.Shell(sess, "Dashboard", displayName(sess)) {
-		<div class="p-6 space-y-4">
-			<div class="flex items-center justify-between">
-				<h1 class="text-xl font-semibold">Dashboard</h1>
-				<a href="/reports" class="text-sm text-blue-600 hover:underline">View full reports →</a>
-			</div>
-
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-				<div class="bg-white border border-gray-200 rounded p-3">
-					<div class="text-xs text-gray-500">Sales today</div>
-					<div class="text-lg font-semibold mt-1">{ strconv.Itoa(dash.TodaySalesCount) }</div>
-				</div>
-				<div class="bg-white border border-gray-200 rounded p-3">
-					<div class="text-xs text-gray-500">Low-stock products</div>
-					<div class="text-lg font-semibold mt-1 text-red-600">{ strconv.Itoa(dash.LowStockCount) }</div>
-				</div>
-				<div class="bg-white border border-gray-200 rounded p-3">
-					<div class="text-xs text-gray-500">Total today</div>
-					<div class="text-lg font-semibold mt-1">₱{ fmt.Sprintf("%.2f", dash.TodayPayments.Total()) }</div>
-				</div>
-			</div>
-
+	@layouts.Shell(sess, "Dashboard", "Dashboard") {
+		<!-- Header -->
+		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
 			<div>
-				<h2 class="text-sm font-semibold text-gray-600 mb-2">Collected today by payment method</h2>
-				<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-					@paymentCard("Cash", dash.TodayPayments.Cash)
-					@paymentCard("GCash", dash.TodayPayments.GCash)
-					@paymentCard("Maribank", dash.TodayPayments.Maribank)
-					@paymentCard("Bank Transfer", dash.TodayPayments.BankTransfer)
-				</div>
+				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">
+					Dashboard
+				</h1>
+				<p class="text-sm text-zinc-400 mt-2">Today's activity at a glance.</p>
+			</div>
+			<a
+				href="/sales/new"
+				class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)] self-start sm:self-auto"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+					<line x1="12" y1="5" x2="12" y2="19"></line>
+					<line x1="5" y1="12" x2="19" y2="12"></line>
+				</svg>
+				New Sale
+			</a>
+		</div>
+
+		<!-- Top summary cards -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+			@statCard("Today's Revenue", fmtMoney(dash.TodayPayments.Total()), "Across all methods", "")
+			@statCard("Today's Sales", fmt.Sprintf("%d", dash.TodaySalesCount), "Completed transactions", "")
+			@statCard("Low Stock", fmt.Sprintf("%d", dash.LowStockCount), "Needs restocking", "")
+			@statCard("Recent", fmt.Sprintf("%d", len(dash.RecentSales)), "Shown below", "")
+		</div>
+
+		<!-- Payment method breakdown -->
+		<div class="mb-6 sm:mb-8">
+			<h2 class="font-display italic uppercase tracking-wider text-lg sm:text-xl mb-3">
+				Today by Payment Method
+			</h2>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+				@paymentCard("Cash", dash.TodayPayments.Cash)
+				@paymentCard("GCash", dash.TodayPayments.GCash)
+				@paymentCard("Maribank", dash.TodayPayments.Maribank)
+				@paymentCard("Bank Transfer", dash.TodayPayments.BankTransfer)
+			</div>
+		</div>
+
+		<!-- Recent sales -->
+		<div class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+			<div class="px-4 sm:px-5 py-3 border-b border-zinc-800 flex items-center justify-between gap-3">
+				<h2 class="font-display italic uppercase tracking-wider text-lg sm:text-xl">
+					Recent Sales
+				</h2>
+				<a href="/sales" class="text-xs text-lime-400 hover:text-lime-300 uppercase tracking-wide">
+					View all →
+				</a>
 			</div>
 
-			<div class="bg-white border border-gray-200 rounded">
-				<div class="px-4 py-2 border-b border-gray-200 font-semibold flex items-center justify-between">
-					<span>Recent sales</span>
-					<a href="/sales" class="text-xs text-blue-600 hover:underline">View all →</a>
+			if len(dash.RecentSales) == 0 {
+				<div class="px-6 py-12 text-center">
+					<div class="mx-auto h-10 w-10 rounded-full border border-zinc-800 flex items-center justify-center mb-3">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-zinc-500">
+							<circle cx="9" cy="21" r="1"></circle>
+							<circle cx="20" cy="21" r="1"></circle>
+							<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+						</svg>
+					</div>
+					<p class="text-zinc-400 text-sm">No sales yet.</p>
+					<a href="/sales/new" class="mt-3 inline-block text-lime-400 hover:text-lime-300 text-sm">
+						Start the first sale →
+					</a>
 				</div>
-				if len(dash.RecentSales) == 0 {
-					<div class="p-6 text-center text-sm text-gray-500">No sales yet.</div>
-				} else {
+			} else {
+				<!-- Desktop table -->
+				<div class="hidden md:block overflow-x-auto">
 					<table class="w-full text-sm">
-						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+						<thead class="bg-zinc-950/60 text-zinc-400">
 							<tr>
-								<th class="px-3 py-2">Reference</th>
-								<th class="px-3 py-2">Date</th>
-								<th class="px-3 py-2">Cashier</th>
-								<th class="px-3 py-2 text-right">Items</th>
-								<th class="px-3 py-2 text-right">Total</th>
-								<th class="px-3 py-2">Payment</th>
+								<th class="text-left font-medium px-4 py-2">Reference</th>
+								<th class="text-left font-medium px-4 py-2">Cashier</th>
+								<th class="text-left font-medium px-4 py-2">Payment</th>
+								<th class="text-right font-medium px-4 py-2">Items</th>
+								<th class="text-left font-medium px-4 py-2">Time</th>
+								<th class="text-right font-medium px-4 py-2">Total</th>
 							</tr>
 						</thead>
-						<tbody class="divide-y divide-gray-100">
+						<tbody>
 							for _, s := range dash.RecentSales {
-								<tr>
-									<td class="px-3 py-2">
-										<a
-											href={ "/sales/" + strconv.FormatInt(s.ID, 10) }
-											class="text-blue-600 hover:underline font-mono text-xs"
-										>{ s.Reference }</a>
+								<tr class="border-t border-zinc-800 hover:bg-zinc-800/40 transition">
+									<td class="px-4 py-2">
+										<a href={ templ.SafeURL("/sales/" + fmt.Sprintf("%d", s.ID)) } class="font-mono text-xs text-lime-400 hover:text-lime-300">
+											{ s.Reference }
+										</a>
 									</td>
-									<td class="px-3 py-2">{ s.SaleDate.Format("2006-01-02 15:04") }</td>
-									<td class="px-3 py-2">{ s.CashierName }</td>
-									<td class="px-3 py-2 text-right">{ strconv.Itoa(s.ItemCount) }</td>
-									<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", s.Total) }</td>
-									<td class="px-3 py-2">{ s.PaymentMethod }</td>
+									<td class="px-4 py-2 text-zinc-300">{ s.CashierName }</td>
+									<td class="px-4 py-2 text-zinc-300">{ s.PaymentMethod }</td>
+									<td class="px-4 py-2 text-right text-zinc-400">{ fmt.Sprintf("%d", s.ItemCount) }</td>
+									<td class="px-4 py-2 text-zinc-400 text-xs">{ fmtDate(s.SaleDate) }</td>
+									<td class="px-4 py-2 text-right text-lime-400 font-medium">{ fmtMoney(s.Total) }</td>
 								</tr>
 							}
 						</tbody>
 					</table>
-				}
-			</div>
+				</div>
+
+				<!-- Mobile stacked cards -->
+				<div class="md:hidden divide-y divide-zinc-800">
+					for _, s := range dash.RecentSales {
+						<a
+							href={ templ.SafeURL("/sales/" + fmt.Sprintf("%d", s.ID)) }
+							class="block px-4 py-3 active:bg-zinc-800/50 transition"
+						>
+							<div class="flex items-center justify-between gap-2">
+								<span class="font-mono text-xs text-lime-400">{ s.Reference }</span>
+								<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-zinc-800 text-zinc-300 border border-zinc-700">
+									{ fmt.Sprintf("%d items", s.ItemCount) }
+								</span>
+							</div>
+							<div class="mt-2 flex items-end justify-between gap-2">
+								<div class="text-xs text-zinc-400 space-y-0.5">
+									<div>{ s.CashierName } · { s.PaymentMethod }</div>
+									<div>{ fmtDate(s.SaleDate) }</div>
+								</div>
+								<div class="text-lime-400 font-display text-lg">
+									{ fmtMoney(s.Total) }
+								</div>
+							</div>
+						</a>
+					}
+				</div>
+			}
 		</div>
 	}
 }
 
-templ paymentCard(label string, amount float64) {
-	<div class="bg-white border border-gray-200 rounded p-3">
-		<div class="text-xs text-gray-500">{ label }</div>
-		<div class="text-lg font-semibold mt-1">₱{ fmt.Sprintf("%.2f", amount) }</div>
+// ---- Reusable partials used by the dashboard ----
+
+templ statCard(label, value, sub, sub2 string) {
+	<div class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-md p-4 transition">
+		<div class="text-xs uppercase tracking-wide text-zinc-400 font-medium">{ label }</div>
+		<div class="mt-1 font-display text-2xl sm:text-3xl text-white">{ value }</div>
+		if sub != "" {
+			<div class="mt-1 text-xs text-zinc-500">
+				{ sub }
+				if sub2 != "" {
+					<span class="text-zinc-600"> · </span>{ sub2 }
+				}
+			</div>
+		}
 	</div>
+}
+
+templ paymentCard(method string, amount float64) {
+	<div class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-md p-4 transition">
+		<div class="flex items-center justify-between gap-2">
+			<span class="text-xs uppercase tracking-wide text-zinc-400 font-medium">{ method }</span>
+			if amount > 0 {
+				<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-lime-400/10 text-lime-400 border border-lime-400/30">
+					active
+				</span>
+			} else {
+				<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-zinc-800 text-zinc-500 border border-zinc-800">
+					none
+				</span>
+			}
+		</div>
+		<div class={ "mt-2 font-display text-xl sm:text-2xl", templ.KV("text-lime-400", amount > 0), templ.KV("text-zinc-600", amount == 0) }>
+			{ fmtMoney(amount) }
+		</div>
+	</div>
+}
+
+// statusBadge — the single definition used by all pages in this package.
+templ statusBadge(status string) {
+	if status == "completed" {
+		<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-lime-400/10 text-lime-400 border border-lime-400/30">
+			<span class="h-1.5 w-1.5 rounded-full bg-lime-400"></span>Completed
+		</span>
+	} else if status == "pending" {
+		<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-zinc-800 text-zinc-300 border border-zinc-700">
+			<span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>Pending
+		</span>
+	} else if status == "void" {
+		<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-red-500/10 text-red-500 border border-red-500/30">
+			<span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Void
+		</span>
+	} else {
+		<span class="px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-zinc-800 text-zinc-300 border border-zinc-700">
+			{ status }
+		</span>
+	}
 }

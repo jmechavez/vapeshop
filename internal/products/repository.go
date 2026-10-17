@@ -1,38 +1,86 @@
+// internal/products/repository.go
 package products
 
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmechavez/vapeshop/internal/database"
 )
 
-var ErrNotFound = errors.New("product not found")
+type Repository struct {
+	db *pgxpool.Pool
+}
 
-// List returns all products with their current stock, alphabetically.
-func List(ctx context.Context, search string) ([]ProductWithStock, error) {
-	query := `
-		SELECT p.id, p.sku, COALESCE(p.barcode, ''), p.name,
-		       COALESCE(p.brand, ''), COALESCE(p.version, ''), COALESCE(p.flavor, ''),
-		       COALESCE(p.category, ''),
-		       p.cost_price, p.selling_price, p.minimum_stock, p.active,
-		       p.created_at, p.updated_at,
-		       COALESCE(i.current_stock, 0)
+var (
+	ErrNotFound = errors.New("product: not found")
+)
+
+// List returns one page of active products (filtered by q) plus the total
+// count of matching rows. perPage defaults to 25, page defaults to 1.
+func List(ctx context.Context, q string, page, perPage int) ([]ProductWithStock, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perPage <= 0 {
+		perPage = 25
+	}
+	offset := (page - 1) * perPage
+
+	var (
+		conds []string
+		args  []any
+		n     int
+	)
+	baseWhere := "WHERE p.active = TRUE"
+
+	if strings.TrimSpace(q) != "" {
+		n++
+		like := "%" + strings.TrimSpace(q) + "%"
+		conds = append(conds,
+			fmt.Sprintf("(p.name ILIKE $%d OR p.sku ILIKE $%d OR COALESCE(p.brand,'') ILIKE $%d)", n, n, n),
+		)
+		args = append(args, like)
+	}
+
+	where := baseWhere
+	if len(conds) > 0 {
+		where += " AND " + strings.Join(conds, " AND ")
+	}
+
+	countSQL := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM products p
+		%s
+	`, where)
+
+	var total int
+	if err := database.Pool.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count products: %w", err)
+	}
+
+	rowsSQL := fmt.Sprintf(`
+		SELECT
+			p.id, p.sku, COALESCE(p.barcode,''), p.name,
+			COALESCE(p.brand,''), COALESCE(p.version,''), COALESCE(p.flavor,''),
+			COALESCE(p.category,''),
+			p.cost_price::float8, p.selling_price::float8,
+			p.minimum_stock, p.active, p.created_at, p.updated_at,
+			COALESCE(i.current_stock, 0)
 		FROM products p
 		LEFT JOIN inventory i ON i.product_id = p.id
-		WHERE p.active = TRUE
-	`
-	args := []any{}
-	if search != "" {
-		query += ` AND (p.name ILIKE $1 OR p.sku ILIKE $1 OR COALESCE(p.brand,'') ILIKE $1)`
-		args = append(args, "%"+search+"%")
-	}
-	query += ` ORDER BY p.name ASC`
+		%s
+		ORDER BY p.name ASC
+		LIMIT %d OFFSET %d
+	`, where, perPage, offset)
 
-	rows, err := database.Pool.Query(ctx, query, args...)
+	rows, err := database.Pool.Query(ctx, rowsSQL, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("list products: %w", err)
 	}
 	defer rows.Close()
 
@@ -42,11 +90,50 @@ func List(ctx context.Context, search string) ([]ProductWithStock, error) {
 		if err := rows.Scan(
 			&p.ID, &p.SKU, &p.Barcode, &p.Name,
 			&p.Brand, &p.Version, &p.Flavor, &p.Category,
-			&p.CostPrice, &p.SellingPrice, &p.MinimumStock, &p.Active,
-			&p.CreatedAt, &p.UpdatedAt,
+			&p.CostPrice, &p.SellingPrice,
+			&p.MinimumStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
 			&p.CurrentStock,
 		); err != nil {
-			return nil, err
+			return nil, 0, fmt.Errorf("scan product: %w", err)
+		}
+		out = append(out, p)
+	}
+	return out, total, rows.Err()
+}
+
+// ListAll — no filter, no pagination. Used by OOB refresh after create/edit.
+func ListAll(ctx context.Context) ([]ProductWithStock, error) {
+	const q = `
+		SELECT
+			p.id, p.sku, COALESCE(p.barcode,''), p.name,
+			COALESCE(p.brand,''), COALESCE(p.version,''), COALESCE(p.flavor,''),
+			COALESCE(p.category,''),
+			p.cost_price::float8, p.selling_price::float8,
+			p.minimum_stock, p.active, p.created_at, p.updated_at,
+			COALESCE(i.current_stock, 0)
+		FROM products p
+		LEFT JOIN inventory i ON i.product_id = p.id
+		WHERE p.active = TRUE
+		ORDER BY p.name ASC
+		LIMIT 500
+	`
+	rows, err := database.Pool.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("list all products: %w", err)
+	}
+	defer rows.Close()
+
+	var out []ProductWithStock
+	for rows.Next() {
+		var p ProductWithStock
+		if err := rows.Scan(
+			&p.ID, &p.SKU, &p.Barcode, &p.Name,
+			&p.Brand, &p.Version, &p.Flavor, &p.Category,
+			&p.CostPrice, &p.SellingPrice,
+			&p.MinimumStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
+			&p.CurrentStock,
+		); err != nil {
+			return nil, fmt.Errorf("scan product: %w", err)
 		}
 		out = append(out, p)
 	}
@@ -55,23 +142,24 @@ func List(ctx context.Context, search string) ([]ProductWithStock, error) {
 
 // Get returns one product with stock.
 func Get(ctx context.Context, id int64) (*ProductWithStock, error) {
-	row := database.Pool.QueryRow(ctx, `
-		SELECT p.id, p.sku, COALESCE(p.barcode, ''), p.name,
-		       COALESCE(p.brand, ''), COALESCE(p.version, ''), COALESCE(p.flavor, ''),
-		       COALESCE(p.category, ''),
-		       p.cost_price, p.selling_price, p.minimum_stock, p.active,
-		       p.created_at, p.updated_at,
-		       COALESCE(i.current_stock, 0)
+	const q = `
+		SELECT
+			p.id, p.sku, COALESCE(p.barcode,''), p.name,
+			COALESCE(p.brand,''), COALESCE(p.version,''), COALESCE(p.flavor,''),
+			COALESCE(p.category,''),
+			p.cost_price::float8, p.selling_price::float8,
+			p.minimum_stock, p.active, p.created_at, p.updated_at,
+			COALESCE(i.current_stock, 0)
 		FROM products p
 		LEFT JOIN inventory i ON i.product_id = p.id
-		WHERE p.id = $1`, id)
-
+		WHERE p.id = $1 AND p.active = TRUE
+	`
 	var p ProductWithStock
-	err := row.Scan(
+	err := database.Pool.QueryRow(ctx, q, id).Scan(
 		&p.ID, &p.SKU, &p.Barcode, &p.Name,
 		&p.Brand, &p.Version, &p.Flavor, &p.Category,
-		&p.CostPrice, &p.SellingPrice, &p.MinimumStock, &p.Active,
-		&p.CreatedAt, &p.UpdatedAt,
+		&p.CostPrice, &p.SellingPrice,
+		&p.MinimumStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
 		&p.CurrentStock,
 	)
 	if err != nil {
@@ -83,59 +171,66 @@ func Get(ctx context.Context, id int64) (*ProductWithStock, error) {
 	return &p, nil
 }
 
-// Create inserts a new product and creates its inventory row with 0 stock.
+// Create inserts a product. Returns the new ID.
 func Create(ctx context.Context, p *Product) (int64, error) {
-	tx, err := database.Pool.Begin(ctx)
-	if err != nil {
-		return 0, err
-	}
-	defer tx.Rollback(ctx)
-
-	var id int64
-	err = tx.QueryRow(ctx, `
+	const q = `
 		INSERT INTO products
 			(sku, barcode, name, brand, version, flavor, category,
 			 cost_price, selling_price, minimum_stock, active)
-		VALUES ($1, NULLIF($2,''), $3, NULLIF($4,''), NULLIF($5,''), NULLIF($6,''),
-		        NULLIF($7,''), $8, $9, $10, TRUE)
-		RETURNING id`,
-		p.SKU, p.Barcode, p.Name, p.Brand, p.Version, p.Flavor, p.Category,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE)
+		RETURNING id
+	`
+	var id int64
+	err := database.Pool.QueryRow(ctx, q,
+		p.SKU, nullIfEmpty(p.Barcode), p.Name,
+		nullIfEmpty(p.Brand), nullIfEmpty(p.Version), nullIfEmpty(p.Flavor), nullIfEmpty(p.Category),
 		p.CostPrice, p.SellingPrice, p.MinimumStock,
 	).Scan(&id)
 	if err != nil {
-		return 0, err
-	}
-
-	_, err = tx.Exec(ctx, `INSERT INTO inventory (product_id, current_stock) VALUES ($1, 0)`, id)
-	if err != nil {
-		return 0, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("create product: %w", err)
 	}
 	return id, nil
 }
 
-// Update writes changed fields.
+// Update updates a product by ID.
 func Update(ctx context.Context, p *Product) error {
-	_, err := database.Pool.Exec(ctx, `
+	const q = `
 		UPDATE products SET
-			sku = $1, barcode = NULLIF($2,''), name = $3,
-			brand = NULLIF($4,''), version = NULLIF($5,''), flavor = NULLIF($6,''),
-			category = NULLIF($7,''),
-			cost_price = $8, selling_price = $9, minimum_stock = $10,
-			updated_at = NOW()
-		WHERE id = $11`,
-		p.SKU, p.Barcode, p.Name, p.Brand, p.Version, p.Flavor, p.Category,
-		p.CostPrice, p.SellingPrice, p.MinimumStock, p.ID,
+			sku = $1, barcode = $2, name = $3, brand = $4, version = $5,
+			flavor = $6, category = $7, cost_price = $8, selling_price = $9,
+			minimum_stock = $10, updated_at = NOW()
+		WHERE id = $11 AND active = TRUE
+	`
+	cmd, err := database.Pool.Exec(ctx, q,
+		p.SKU, nullIfEmpty(p.Barcode), p.Name,
+		nullIfEmpty(p.Brand), nullIfEmpty(p.Version), nullIfEmpty(p.Flavor), nullIfEmpty(p.Category),
+		p.CostPrice, p.SellingPrice, p.MinimumStock,
+		p.ID,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("update product: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
-// SoftDelete marks the product inactive. Keeps history intact.
+// SoftDelete marks the product as inactive.
 func SoftDelete(ctx context.Context, id int64) error {
-	_, err := database.Pool.Exec(ctx,
-		`UPDATE products SET active = FALSE, updated_at = NOW() WHERE id = $1`, id)
-	return err
+	cmd, err := database.Pool.Exec(ctx, `UPDATE products SET active = FALSE, updated_at = NOW() WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("soft delete product: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func nullIfEmpty(s string) any {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	return s
 }

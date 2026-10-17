@@ -19,9 +19,53 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-// List returns every active product with its current stock.
-func (r *Repository) List(ctx context.Context) ([]InventoryRow, error) {
-	const q = `
+// List returns one page of active products, filtered by q / low-only,
+// plus the total count of matching rows.
+func (r *Repository) List(ctx context.Context, f ListFilter) ([]InventoryRow, int, error) {
+	if f.Page < 1 {
+		f.Page = 1
+	}
+	if f.PerPage <= 0 {
+		f.PerPage = 25
+	}
+	offset := (f.Page - 1) * f.PerPage
+
+	var conds []string
+	var args []any
+	n := 0
+
+	if f.Query != "" {
+		n++
+		like := "%" + f.Query + "%"
+		conds = append(conds,
+			fmt.Sprintf("(p.name ILIKE $%d OR p.sku ILIKE $%d OR COALESCE(p.brand,'') ILIKE $%d)", n, n, n),
+		)
+		args = append(args, like)
+	}
+	if f.LowOnly {
+		conds = append(conds, "COALESCE(i.current_stock,0) <= p.minimum_stock")
+	}
+
+	where := "WHERE p.active = TRUE"
+	if len(conds) > 0 {
+		where += " AND " + strings.Join(conds, " AND ")
+	}
+
+	// Total count
+	countSQL := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM products p
+		LEFT JOIN inventory i ON i.product_id = p.id
+		%s
+	`, where)
+
+	var total int
+	if err := r.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count inventory: %w", err)
+	}
+
+	// Page rows
+	pageSQL := fmt.Sprintf(`
 		SELECT
 			p.id,
 			p.sku,
@@ -33,12 +77,52 @@ func (r *Repository) List(ctx context.Context) ([]InventoryRow, error) {
 			COALESCE(i.updated_at, p.updated_at) AS updated_at
 		FROM products p
 		LEFT JOIN inventory i ON i.product_id = p.id
+		%s
+		ORDER BY p.name ASC
+		LIMIT %d OFFSET %d
+	`, where, f.PerPage, offset)
+
+	rows, err := r.db.Query(ctx, pageSQL, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list inventory: %w", err)
+	}
+	defer rows.Close()
+
+	var out []InventoryRow
+	for rows.Next() {
+		var it InventoryRow
+		if err := rows.Scan(
+			&it.ProductID, &it.SKU, &it.Name, &it.Brand, &it.Category,
+			&it.CurrentStock, &it.MinimumStock, &it.UpdatedAt,
+		); err != nil {
+			return nil, 0, fmt.Errorf("scan inventory: %w", err)
+		}
+		it.IsLowStock = it.CurrentStock <= it.MinimumStock
+		out = append(out, it)
+	}
+	return out, total, rows.Err()
+}
+
+// ListAll returns every active product with no filter — used only for OOB
+// refreshes after a Receive/Adjust.
+func (r *Repository) ListAll(ctx context.Context) ([]InventoryRow, error) {
+	const q = `
+		SELECT
+			p.id, p.sku, p.name,
+			COALESCE(p.brand, '')    AS brand,
+			COALESCE(p.category, '') AS category,
+			COALESCE(i.current_stock, 0) AS current_stock,
+			p.minimum_stock,
+			COALESCE(i.updated_at, p.updated_at) AS updated_at
+		FROM products p
+		LEFT JOIN inventory i ON i.product_id = p.id
 		WHERE p.active = TRUE
 		ORDER BY p.name ASC
+		LIMIT 500
 	`
 	rows, err := r.db.Query(ctx, q)
 	if err != nil {
-		return nil, fmt.Errorf("list inventory: %w", err)
+		return nil, fmt.Errorf("list all inventory: %w", err)
 	}
 	defer rows.Close()
 
@@ -198,9 +282,6 @@ func (r *Repository) Adjust(ctx context.Context, productID, userID int64, in Adj
 }
 
 // Movements returns history rows with optional filters.
-//
-// NOTE: query filters by product name OR sku (ILIKE), which needs the same
-// value bound to two placeholders. We handle that as a special case below.
 func (r *Repository) Movements(ctx context.Context, f MovementFilter) ([]Movement, error) {
 	var (
 		conds []string
@@ -214,7 +295,6 @@ func (r *Repository) Movements(ctx context.Context, f MovementFilter) ([]Movemen
 	}
 
 	if f.Query != "" {
-		// Same pattern goes into TWO placeholders, so we bind the value twice.
 		n++
 		like := "%" + f.Query + "%"
 		conds = append(conds,

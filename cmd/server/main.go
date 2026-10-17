@@ -1,4 +1,3 @@
-// cmd/server/main.go
 package main
 
 import (
@@ -33,7 +32,6 @@ func main() {
 
 	sessionStore := auth.NewStore()
 
-	// ---------- auth ----------
 	authHandler := &auth.Handler{
 		Store: sessionStore,
 		RenderLogin: func(w http.ResponseWriter, r *http.Request, errMsg string) {
@@ -41,17 +39,19 @@ func main() {
 		},
 	}
 
-	// ---------- products ----------
 	productsHandler := &products.Handler{
-		RenderList: func(w http.ResponseWriter, r *http.Request, list []products.ProductWithStock, q string) {
+		RenderList: func(w http.ResponseWriter, r *http.Request, list []products.ProductWithStock, q string, page products.Page) {
 			sess := auth.FromContext(r.Context())
-			pages.Products(sess, list, q).Render(r.Context(), w)
+			pages.Products(sess, list, q, page).Render(r.Context(), w)
 		},
-		RenderSearch: func(w http.ResponseWriter, r *http.Request, list []products.ProductWithStock) {
-			partials.ProductsTable(list).Render(r.Context(), w)
+		RenderSearch: func(w http.ResponseWriter, r *http.Request, list []products.ProductWithStock, q string, page products.Page) {
+			partials.ProductsTable(list, q, page).Render(r.Context(), w)
 		},
 		RenderNewModal: func(w http.ResponseWriter, r *http.Request, p products.Product, errMsg string) {
 			partials.ProductFormModal(p, errMsg).Render(r.Context(), w)
+		},
+		RenderEditModal: func(w http.ResponseWriter, r *http.Request, p products.Product) {
+			partials.ProductEditModal(p).Render(r.Context(), w)
 		},
 		RenderRow: func(w http.ResponseWriter, r *http.Request, p products.ProductWithStock) {
 			partials.ProductRow(p).Render(r.Context(), w)
@@ -67,37 +67,37 @@ func main() {
 		},
 	}
 
-	// ---------- inventory ----------
 	invRepo := inventory.NewRepository(database.Pool)
 	invHandler := &inventory.Handler{Repo: invRepo}
 
-	invHandler.RenderList = func(w http.ResponseWriter, r *http.Request, rows []inventory.InventoryRow) {
+	invHandler.RenderList = func(w http.ResponseWriter, r *http.Request, rows []inventory.InventoryRow, filter inventory.ListFilter, page inventory.Page) {
+		if r.Header.Get("HX-Request") == "true" {
+			partials.InventoryTable(rows, filter, page).Render(r.Context(), w)
+			return
+		}
 		sess := auth.FromContext(r.Context())
-		pages.InventoryPage(sess, rows).Render(r.Context(), w)
+		pages.InventoryPage(sess, rows, filter, page).Render(r.Context(), w)
 	}
-
+	invHandler.RenderListOOB = func(w http.ResponseWriter, r *http.Request, rows []inventory.InventoryRow) {
+		partials.InventoryTableOOB(rows).Render(r.Context(), w)
+	}
 	invHandler.RenderRow = func(w http.ResponseWriter, r *http.Request, row inventory.InventoryRow) {
 		partials.InventoryRow(row).Render(r.Context(), w)
 	}
-
 	invHandler.RenderReceiveModal = func(w http.ResponseWriter, r *http.Request, row inventory.InventoryRow, suppliers []inventory.Supplier) {
 		partials.ReceiveModal(row, suppliers).Render(r.Context(), w)
 	}
-
 	invHandler.RenderAdjustModal = func(w http.ResponseWriter, r *http.Request, row inventory.InventoryRow) {
 		partials.AdjustModal(row).Render(r.Context(), w)
 	}
-
 	invHandler.RenderMovements = func(w http.ResponseWriter, r *http.Request, movements []inventory.Movement, filter inventory.MovementFilter) {
 		sess := auth.FromContext(r.Context())
 		pages.MovementsPage(sess, movements, filter).Render(r.Context(), w)
 	}
-
 	invHandler.RenderMovementsTable = func(w http.ResponseWriter, r *http.Request, movements []inventory.Movement) {
 		partials.MovementsTable(movements).Render(r.Context(), w)
 	}
 
-	// ---------- suppliers ----------
 	supRepo := suppliers.NewRepository(database.Pool)
 	supHandler := &suppliers.Handler{Repo: supRepo}
 
@@ -109,29 +109,24 @@ func main() {
 		sess := auth.FromContext(r.Context())
 		pages.SuppliersPage(sess, list).Render(r.Context(), w)
 	}
-
 	supHandler.RenderRow = func(w http.ResponseWriter, r *http.Request, s suppliers.SupplierWithStats) {
 		partials.SupplierRow(s).Render(r.Context(), w)
 	}
-
 	supHandler.RenderNewModal = func(w http.ResponseWriter, r *http.Request, in suppliers.Input, errMsg string) {
 		partials.SupplierNewModal(in, errMsg).Render(r.Context(), w)
 	}
-
 	supHandler.RenderEditModal = func(w http.ResponseWriter, r *http.Request, s suppliers.Supplier, errMsg string) {
 		partials.SupplierEditModal(s, errMsg).Render(r.Context(), w)
 	}
-
 	supHandler.RenderDetail = func(w http.ResponseWriter, r *http.Request, s suppliers.Supplier, purchases []suppliers.PurchaseRow) {
 		sess := auth.FromContext(r.Context())
 		pages.SupplierDetailPage(sess, s, purchases).Render(r.Context(), w)
 	}
 
-	// ---------- sales ----------
 	salesHandler := &sales.Handler{
-		RenderList: func(w http.ResponseWriter, r *http.Request, list []sales.Sale, f sales.Filter) {
+		RenderList: func(w http.ResponseWriter, r *http.Request, list []sales.Sale, f sales.Filter, page sales.Page) {
 			sess := auth.FromContext(r.Context())
-			pages.SalesList(sess, list, f).Render(r.Context(), w)
+			pages.SalesList(sess, list, f, page).Render(r.Context(), w)
 		},
 		RenderPOS: func(w http.ResponseWriter, r *http.Request, sale sales.Sale) {
 			sess := auth.FromContext(r.Context())
@@ -152,7 +147,6 @@ func main() {
 		},
 	}
 
-	// ---------- reports ----------
 	reportsHandler := &reports.Handler{
 		RenderReports: func(w http.ResponseWriter, r *http.Request, report reports.Report) {
 			sess := auth.FromContext(r.Context())
@@ -167,7 +161,6 @@ func main() {
 		},
 	}
 
-	// ---------- router ----------
 	r := chi.NewRouter()
 
 	r.Use(chimw.RequestID)
@@ -177,15 +170,11 @@ func main() {
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	// Public
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		pages.Home().Render(r.Context(), w)
-	})
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) { pages.Home().Render(r.Context(), w) })
 	r.Get("/login", authHandler.LoginPage)
 	r.Post("/login", authHandler.Login)
 	r.Post("/logout", authHandler.Logout)
 
-	// Protected
 	r.Group(func(pr chi.Router) {
 		pr.Use(sessionStore.RequireLogin)
 
@@ -198,20 +187,20 @@ func main() {
 			pr.Post("/", productsHandler.Create)
 			pr.Post("/import", productsHandler.ImportCSV)
 			pr.Get("/{id}/edit", productsHandler.EditInline)
+			pr.Get("/{id}/edit-modal", productsHandler.EditModal)
 			pr.Get("/{id}/row", productsHandler.CancelEdit)
 			pr.Put("/{id}", productsHandler.Update)
 			pr.Delete("/{id}", productsHandler.Delete)
 		})
 
-		// inventory
 		pr.Get("/inventory", invHandler.List)
+		pr.Get("/inventory/search", invHandler.Search)
 		pr.Get("/inventory/receive/{productID}", invHandler.ReceiveModal)
 		pr.Post("/inventory/receive/{productID}", invHandler.Receive)
 		pr.Get("/inventory/adjust/{productID}", invHandler.AdjustModal)
 		pr.Post("/inventory/adjust/{productID}", invHandler.Adjust)
 		pr.Get("/inventory/movements", invHandler.Movements)
 
-		// suppliers
 		pr.Get("/suppliers", supHandler.Index)
 		pr.Get("/suppliers/new", supHandler.NewModal)
 		pr.Post("/suppliers", supHandler.Create)
@@ -220,7 +209,6 @@ func main() {
 		pr.Put("/suppliers/{id}", supHandler.Update)
 		pr.Delete("/suppliers/{id}", supHandler.Delete)
 
-		// sales
 		pr.Get("/sales", salesHandler.List)
 		pr.Get("/sales/new", salesHandler.NewSale)
 		pr.Get("/sales/search-products", salesHandler.SearchProducts)
@@ -235,7 +223,6 @@ func main() {
 		pr.Post("/sales/{id}/complete", salesHandler.Complete)
 		pr.Post("/sales/{id}/void", salesHandler.Void)
 
-		// reports
 		pr.Get("/reports", reportsHandler.Reports)
 		pr.Get("/reports/summary", reportsHandler.Summary)
 	})

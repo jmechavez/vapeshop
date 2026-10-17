@@ -19,7 +19,6 @@ import (
 	"github.com/jmechavez/vapeshop/views/partials"
 )
 
-// SuppliersPage is the /suppliers full page.
 func SuppliersPage(sess *auth.Session, list []suppliers.SupplierWithStats) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -53,7 +52,7 @@ func SuppliersPage(sess *auth.Session, list []suppliers.SupplierWithStats) templ
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-between mb-6\"><div><h1 class=\"text-2xl font-semibold text-slate-800\">Suppliers</h1><p class=\"text-sm text-slate-500 mt-1\">Manage your vendors and see their purchase history.</p></div><button hx-get=\"/suppliers/new\" hx-target=\"#modal-root\" hx-swap=\"innerHTML\" class=\"px-3 py-2 text-sm rounded-md bg-slate-800 text-white hover:bg-slate-700\">+ Add supplier</button></div><!-- Flash message area for delete errors --> <div id=\"flash\" class=\"mb-4\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Page header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6\"><div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none\">Suppliers</h1><p class=\"text-sm text-zinc-400 mt-2\">Manage your vendors and see their purchase history.</p></div><button hx-get=\"/suppliers/new\" hx-target=\"#modal-root\" hx-swap=\"innerHTML\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition self-start sm:self-auto sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-4 w-4\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line> <line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> Add supplier</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -67,7 +66,7 @@ func SuppliersPage(sess *auth.Session, list []suppliers.SupplierWithStats) templ
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layouts.Shell(sess, "Suppliers", sess.FullName).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layouts.Shell(sess, "Suppliers", "Suppliers").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -75,7 +74,6 @@ func SuppliersPage(sess *auth.Session, list []suppliers.SupplierWithStats) templ
 	})
 }
 
-// SupplierDetailPage is the /suppliers/{id} full page.
 func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []suppliers.PurchaseRow) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -109,33 +107,33 @@ func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []su
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"flex items-center justify-between mb-6\"><div><div class=\"text-xs text-slate-500 mb-1\"><a href=\"/suppliers\" class=\"hover:underline\">Suppliers</a> <span>/ </span> <span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Page header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6\"><div class=\"min-w-0\"><div class=\"text-xs text-zinc-500 mb-1\"><a href=\"/suppliers\" class=\"hover:text-lime-400 transition\">Suppliers</a> <span class=\"text-zinc-700\">/ </span> <span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(s.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 48, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 51, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div><h1 class=\"text-2xl font-semibold text-slate-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none truncate\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(s.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 50, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 54, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</h1></div><a href=\"/suppliers\" class=\"px-3 py-2 text-sm rounded-md border border-slate-300 hover:bg-slate-50\">Back to suppliers</a></div><div class=\"grid grid-cols-1 md:grid-cols-3 gap-4 mb-6\"><div class=\"bg-white border border-slate-200 rounded-lg p-4 md:col-span-2\"><h2 class=\"text-sm font-semibold text-slate-700 mb-3\">Contact</h2><dl class=\"grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm\"><div><dt class=\"text-xs text-slate-500\">Contact person</dt><dd class=\"text-slate-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</h1></div><a href=\"/suppliers\" class=\"min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto\">Back to suppliers</a></div><!-- Contact + summary grid --> <div class=\"grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-6\"><div class=\"bg-zinc-900 border border-zinc-800 rounded-md p-4 sm:p-5 md:col-span-2\"><h2 class=\"font-display italic uppercase tracking-wider text-sm text-zinc-300 mb-3\">Contact</h2><dl class=\"grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm\"><div><dt class=\"text-xs uppercase tracking-wide text-zinc-500\">Contact person</dt><dd class=\"text-zinc-200 mt-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -143,19 +141,19 @@ func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []su
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(s.ContactPerson)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 68, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 74, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<span class=\"text-slate-400\">—</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<span class=\"text-zinc-600\">—</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</dd></div><div><dt class=\"text-xs text-slate-500\">Phone</dt><dd class=\"text-slate-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</dd></div><div><dt class=\"text-xs uppercase tracking-wide text-zinc-500\">Phone</dt><dd class=\"text-zinc-200 mt-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -163,19 +161,19 @@ func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []su
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(s.Phone)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 78, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 84, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"text-slate-400\">—</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"text-zinc-600\">—</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</dd></div><div><dt class=\"text-xs text-slate-500\">Email</dt><dd class=\"text-slate-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</dd></div><div><dt class=\"text-xs uppercase tracking-wide text-zinc-500\">Email</dt><dd class=\"text-zinc-200 mt-1 break-all\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -183,19 +181,19 @@ func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []su
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(s.Email)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 88, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 94, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span class=\"text-slate-400\">—</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span class=\"text-zinc-600\">—</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</dd></div><div><dt class=\"text-xs text-slate-500\">Address</dt><dd class=\"text-slate-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</dd></div><div><dt class=\"text-xs uppercase tracking-wide text-zinc-500\">Address</dt><dd class=\"text-zinc-200 mt-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -203,32 +201,32 @@ func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []su
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(s.Address)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 98, Col: 19}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 104, Col: 19}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<span class=\"text-slate-400\">—</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<span class=\"text-zinc-600\">—</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</dd></div></dl></div><div class=\"bg-white border border-slate-200 rounded-lg p-4\"><h2 class=\"text-sm font-semibold text-slate-700 mb-3\">Summary</h2><div class=\"text-sm\"><div class=\"text-slate-500\">Total movements</div><div class=\"text-2xl font-semibold text-slate-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</dd></div></dl></div><div class=\"bg-zinc-900 border border-zinc-800 rounded-md p-4 sm:p-5\"><h2 class=\"font-display italic uppercase tracking-wider text-sm text-zinc-300 mb-3\">Summary</h2><div><div class=\"text-xs uppercase tracking-wide text-zinc-500\">Total movements</div><div class=\"font-display text-3xl text-lime-400 mt-1 tabular-nums\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(len(purchases)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 111, Col: 84}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/suppliers.templ`, Line: 117, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div></div><h2 class=\"text-lg font-semibold text-slate-800 mb-3\">Purchase history</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div></div><!-- Purchases --> <h2 class=\"font-display italic uppercase tracking-wider text-lg sm:text-xl mb-3\">Purchase History</h2>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -242,7 +240,7 @@ func SupplierDetailPage(sess *auth.Session, s suppliers.Supplier, purchases []su
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = layouts.Shell(sess, "Supplier: "+s.Name, sess.FullName).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layouts.Shell(sess, "Supplier: "+s.Name, "Suppliers").Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

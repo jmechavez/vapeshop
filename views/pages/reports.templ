@@ -9,64 +9,65 @@ import (
 	"github.com/jmechavez/vapeshop/views/layouts"
 )
 
+func limitSlice[T any](items []T, max int) []T {
+	if len(items) > max {
+		return items[:max]
+	}
+	return items
+}
+
 templ ReportsPage(sess *auth.Session, report reports.Report) {
-	@layouts.Shell(sess, "Reports", displayName(sess)) {
-		<div class="p-6 space-y-4">
-			<div class="flex items-center justify-between">
-				<h1 class="text-xl font-semibold">Reports</h1>
-				<a href="/dashboard" class="text-sm text-blue-600 hover:underline">← Dashboard</a>
+	@layouts.Shell(sess, "Reports", "Reports") {
+		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6">
+			<div>
+				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">
+					Reports
+				</h1>
+				<p class="text-sm text-zinc-400 mt-2">
+					Sales performance for the selected range.
+				</p>
 			</div>
-
-			<form
-				method="get"
-				action="/reports"
-				class="flex flex-wrap gap-2 text-sm items-end"
-				hx-get="/reports/summary"
-				hx-target="#reports-content"
-				hx-swap="outerHTML"
-				hx-trigger="change from:input, change from:select"
-				hx-push-url="true"
-			>
-				<label class="flex flex-col">
-					<span class="text-xs text-gray-500">From</span>
-					<input
-						type="date"
-						name="from"
-						value={ report.Range.From }
-						class="border border-gray-300 rounded px-2 py-1"
-					/>
-				</label>
-				<label class="flex flex-col">
-					<span class="text-xs text-gray-500">To</span>
-					<input
-						type="date"
-						name="to"
-						value={ report.Range.To }
-						class="border border-gray-300 rounded px-2 py-1"
-					/>
-				</label>
-				<button type="submit" class="px-3 py-1 border border-gray-300 rounded">Apply</button>
-				<a href="/reports" class="px-3 py-1 text-gray-600 hover:underline">Reset</a>
-			</form>
-
-			@ReportsContent(report)
+			<a href="/dashboard" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto">
+				← Dashboard
+			</a>
 		</div>
+
+		<form method="get" action="/reports" hx-get="/reports/summary" hx-target="#reports-content" hx-swap="outerHTML" hx-trigger="change from:input, change from:select" hx-push-url="true" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 bg-zinc-900 border border-zinc-800 rounded-md p-4">
+			<div>
+				<label class="block text-xs font-medium text-zinc-400 mb-1">From</label>
+				<input type="date" name="from" value={ report.Range.From } class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
+			</div>
+			<div>
+				<label class="block text-xs font-medium text-zinc-400 mb-1">To</label>
+				<input type="date" name="to" value={ report.Range.To } class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
+			</div>
+			<div class="flex items-end gap-2">
+				<button type="submit" class="min-h-[44px] flex-1 inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">
+					Apply
+				</button>
+				<a href="/reports" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">
+					Reset
+				</a>
+			</div>
+		</form>
+
+		@ReportsContent(report)
 	}
 }
 
 templ ReportsContent(report reports.Report) {
-	<div id="reports-content" class="space-y-4">
-		<!-- Summary cards -->
-		<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-			@summaryCard("Sales", strconv.Itoa(report.Summary.SalesCount))
-			@summaryCard("Items sold", strconv.Itoa(report.Summary.ItemsSold))
-			@summaryCard("Total", "₱"+fmt.Sprintf("%.2f", report.Payments.Total()))
+	<div id="reports-content" class="space-y-6">
+		<div class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+			@summaryCard("Sales", strconv.Itoa(report.Summary.SalesCount), "completed")
+			@summaryCard("Items Sold", strconv.Itoa(report.Summary.ItemsSold), "units")
+			@summaryCard("Total", "₱"+fmt.Sprintf("%.2f", report.Payments.Total()), "collected")
 		</div>
 
-		<!-- Payment method breakdown -->
 		<div>
-			<h2 class="text-sm font-semibold text-gray-600 mb-2">Collected by payment method</h2>
-			<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+			<h2 class="font-display italic uppercase tracking-wider text-lg sm:text-xl mb-3">
+				Collected by Payment Method
+			</h2>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
 				@paymentCard("Cash", report.Payments.Cash)
 				@paymentCard("GCash", report.Payments.GCash)
 				@paymentCard("Maribank", report.Payments.Maribank)
@@ -74,170 +75,238 @@ templ ReportsContent(report reports.Report) {
 			</div>
 		</div>
 
-		<!-- Daily chart -->
-		<div class="bg-white border border-gray-200 rounded p-4">
-			<div class="flex items-center justify-between mb-2">
-				<h2 class="font-semibold">Daily totals</h2>
-				<span class="text-xs text-gray-500">
+		<div class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+			<div class="px-4 sm:px-5 py-3 border-b border-zinc-800 flex items-center justify-between gap-3">
+				<h2 class="font-display italic uppercase tracking-wider text-lg sm:text-xl">
+					Daily Totals
+				</h2>
+				<span class="text-xs text-zinc-500 font-mono whitespace-nowrap">
 					{ report.Range.From } → { report.Range.To }
 				</span>
 			</div>
-			if len(report.Chart.Bars) == 0 {
-				<div class="p-6 text-center text-sm text-gray-500">No sales in this range.</div>
-			} else {
-				@dailyBarChart(report.Chart)
-			}
+			<div class="p-4">
+				if len(report.Chart.Bars) == 0 {
+					<div class="py-10 text-center">
+						<p class="text-zinc-400 text-sm">No sales in this range.</p>
+					</div>
+				} else {
+					@dailyBarChart(report.Chart)
+				}
+			</div>
 		</div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<!-- Top products -->
-			<div class="bg-white border border-gray-200 rounded">
-				<div class="px-4 py-2 border-b border-gray-200 font-semibold">Top products</div>
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+			<div class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+				<div class="px-4 sm:px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
+					<h2 class="font-display italic uppercase tracking-wider text-base sm:text-lg">
+						Top Products
+					</h2>
+					<a href="/products" class="text-xs text-lime-400 hover:text-lime-300 uppercase tracking-wide">
+						View Catalog →
+					</a>
+				</div>
 				if len(report.TopProducts) == 0 {
-					<div class="p-6 text-center text-sm text-gray-500">No items sold in this range.</div>
+					<div class="px-6 py-10 text-center">
+						<p class="text-zinc-400 text-sm">No items sold in this range.</p>
+					</div>
 				} else {
-					<table class="w-full text-sm">
-						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
-							<tr>
-								<th class="px-3 py-2">SKU</th>
-								<th class="px-3 py-2">Product</th>
-								<th class="px-3 py-2 text-right">Qty</th>
-								<th class="px-3 py-2 text-right">Amount</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-gray-100">
-							for _, p := range report.TopProducts {
+					<div class="hidden md:block overflow-x-auto">
+						<table class="min-w-full text-sm">
+							<thead class="bg-zinc-950/60 text-zinc-400">
 								<tr>
-									<td class="px-3 py-2 font-mono text-xs">{ p.SKU }</td>
-									<td class="px-3 py-2">{ p.Name }</td>
-									<td class="px-3 py-2 text-right">{ strconv.Itoa(p.QtySold) }</td>
-									<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", p.Revenue) }</td>
+									<th class="text-left font-medium px-3 py-2">SKU</th>
+									<th class="text-left font-medium px-3 py-2">Product</th>
+									<th class="text-right font-medium px-3 py-2">Qty</th>
+									<th class="text-right font-medium px-3 py-2">Amount</th>
 								</tr>
-							}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								for _, p := range limitSlice(report.TopProducts, 5) {
+									<tr class="border-t border-zinc-800">
+										<td class="px-3 py-2 font-mono text-xs text-zinc-300">{ p.SKU }</td>
+										<td class="px-3 py-2 text-zinc-200">{ p.Name }</td>
+										<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">{ strconv.Itoa(p.QtySold) }</td>
+										<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{ fmt.Sprintf("%.2f", p.Revenue) }</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<div class="md:hidden divide-y divide-zinc-800">
+						for _, p := range limitSlice(report.TopProducts, 5) {
+							<div class="px-4 py-3">
+								<div class="flex items-start justify-between gap-2">
+									<div class="min-w-0 flex-1">
+										<div class="font-medium text-white truncate">{ p.Name }</div>
+										<div class="text-xs font-mono text-zinc-500 mt-0.5">{ p.SKU }</div>
+									</div>
+									<div class="text-right shrink-0">
+										<div class="text-lime-400 font-display text-base tabular-nums">₱{ fmt.Sprintf("%.2f", p.Revenue) }</div>
+										<div class="text-xs text-zinc-500 tabular-nums">{ strconv.Itoa(p.QtySold) } sold</div>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
 				}
 			</div>
 
-			<!-- Low stock -->
-			<div class="bg-white border border-gray-200 rounded">
-				<div class="px-4 py-2 border-b border-gray-200 font-semibold flex items-center justify-between">
-					<span>Low stock</span>
-					<a href="/inventory" class="text-xs text-blue-600 hover:underline">View inventory →</a>
+			<div class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+				<div class="px-4 sm:px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
+					<h2 class="font-display italic uppercase tracking-wider text-base sm:text-lg">
+						Low Stock
+					</h2>
+					<a href="/inventory?low=1" class="text-xs text-lime-400 hover:text-lime-300 uppercase tracking-wide">
+						Manage Inventory →
+					</a>
 				</div>
 				if len(report.LowStock) == 0 {
-					<div class="p-6 text-center text-sm text-gray-500">All products are above their minimum.</div>
+					<div class="px-6 py-10 text-center">
+						<p class="text-zinc-400 text-sm">All products are above their minimum.</p>
+					</div>
 				} else {
-					<table class="w-full text-sm">
-						<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
-							<tr>
-								<th class="px-3 py-2">SKU</th>
-								<th class="px-3 py-2">Product</th>
-								<th class="px-3 py-2 text-right">Stock</th>
-								<th class="px-3 py-2 text-right">Min</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-gray-100">
-							for _, l := range report.LowStock {
+					<div class="hidden md:block overflow-x-auto">
+						<table class="min-w-full text-sm">
+							<thead class="bg-zinc-950/60 text-zinc-400">
 								<tr>
-									<td class="px-3 py-2 font-mono text-xs">{ l.SKU }</td>
-									<td class="px-3 py-2">{ l.Name }</td>
-									<td class="px-3 py-2 text-right text-red-600 font-semibold">
-										{ strconv.Itoa(l.CurrentStock) }
-									</td>
-									<td class="px-3 py-2 text-right text-gray-500">{ strconv.Itoa(l.MinimumStock) }</td>
+									<th class="text-left font-medium px-3 py-2">SKU</th>
+									<th class="text-left font-medium px-3 py-2">Product</th>
+									<th class="text-right font-medium px-3 py-2">Stock</th>
+									<th class="text-right font-medium px-3 py-2">Min</th>
 								</tr>
-							}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								for _, l := range limitSlice(report.LowStock, 5) {
+									<tr class="border-t border-zinc-800">
+										<td class="px-3 py-2 font-mono text-xs text-zinc-300">{ l.SKU }</td>
+										<td class="px-3 py-2 text-zinc-200">{ l.Name }</td>
+										<td class="px-3 py-2 text-right">
+											<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-red-500/10 text-red-500 border border-red-500/30 tabular-nums">
+												<span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>{ strconv.Itoa(l.CurrentStock) }
+											</span>
+										</td>
+										<td class="px-3 py-2 text-right text-zinc-500 tabular-nums">{ strconv.Itoa(l.MinimumStock) }</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<div class="md:hidden divide-y divide-zinc-800">
+						for _, l := range limitSlice(report.LowStock, 5) {
+							<div class="px-4 py-3">
+								<div class="flex items-start justify-between gap-2">
+									<div class="min-w-0 flex-1">
+										<div class="font-medium text-white truncate">{ l.Name }</div>
+										<div class="text-xs font-mono text-zinc-500 mt-0.5">{ l.SKU }</div>
+									</div>
+									<div class="text-right shrink-0">
+										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-red-500/10 text-red-500 border border-red-500/30 tabular-nums">
+											<span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>{ strconv.Itoa(l.CurrentStock) }
+										</span>
+										<div class="text-[10px] uppercase tracking-wide text-zinc-500 mt-1 tabular-nums">min { strconv.Itoa(l.MinimumStock) }</div>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
 				}
 			</div>
 		</div>
 
-		<!-- Recent sales -->
-		<div class="bg-white border border-gray-200 rounded">
-			<div class="px-4 py-2 border-b border-gray-200 font-semibold flex items-center justify-between">
-				<span>Recent sales</span>
-				<a href="/sales" class="text-xs text-blue-600 hover:underline">View all sales →</a>
+		<div class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+			<div class="px-4 sm:px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
+				<h2 class="font-display italic uppercase tracking-wider text-base sm:text-lg">
+					Recent Sales
+				</h2>
+				<a href="/sales" class="text-xs text-lime-400 hover:text-lime-300 uppercase tracking-wide">
+					View All Sales →
+				</a>
 			</div>
 			if len(report.RecentSales) == 0 {
-				<div class="p-6 text-center text-sm text-gray-500">No sales yet.</div>
+				<div class="px-6 py-10 text-center">
+					<p class="text-zinc-400 text-sm">No sales yet.</p>
+				</div>
 			} else {
-				<table class="w-full text-sm">
-					<thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
-						<tr>
-							<th class="px-3 py-2">Reference</th>
-							<th class="px-3 py-2">Date</th>
-							<th class="px-3 py-2">Cashier</th>
-							<th class="px-3 py-2 text-right">Items</th>
-							<th class="px-3 py-2 text-right">Total</th>
-							<th class="px-3 py-2">Payment</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-gray-100">
-						for _, s := range report.RecentSales {
+				<div class="hidden md:block overflow-x-auto">
+					<table class="min-w-full text-sm">
+						<thead class="bg-zinc-950/60 text-zinc-400">
 							<tr>
-								<td class="px-3 py-2">
-									<a
-										href={ "/sales/" + strconv.FormatInt(s.ID, 10) }
-										class="text-blue-600 hover:underline font-mono text-xs"
-									>{ s.Reference }</a>
-								</td>
-								<td class="px-3 py-2">{ s.SaleDate.Format("2006-01-02 15:04") }</td>
-								<td class="px-3 py-2">{ s.CashierName }</td>
-								<td class="px-3 py-2 text-right">{ strconv.Itoa(s.ItemCount) }</td>
-								<td class="px-3 py-2 text-right">₱{ fmt.Sprintf("%.2f", s.Total) }</td>
-								<td class="px-3 py-2">{ s.PaymentMethod }</td>
+								<th class="text-left font-medium px-3 py-2">Reference</th>
+								<th class="text-left font-medium px-3 py-2">Date</th>
+								<th class="text-left font-medium px-3 py-2">Cashier</th>
+								<th class="text-right font-medium px-3 py-2">Items</th>
+								<th class="text-right font-medium px-3 py-2">Total</th>
+								<th class="text-left font-medium px-3 py-2">Payment</th>
 							</tr>
-						}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							for _, s := range limitSlice(report.RecentSales, 5) {
+								<tr class="border-t border-zinc-800 hover:bg-zinc-800/40 transition">
+									<td class="px-3 py-2">
+										<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(s.ID, 10)) } class="font-mono text-xs text-lime-400 hover:text-lime-300">
+											{ s.Reference }
+										</a>
+									</td>
+									<td class="px-3 py-2 text-zinc-400 text-xs whitespace-nowrap">{ s.SaleDate.Format("2006-01-02 15:04") }</td>
+									<td class="px-3 py-2 text-zinc-300">{ s.CashierName }</td>
+									<td class="px-3 py-2 text-right text-zinc-400 tabular-nums">{ strconv.Itoa(s.ItemCount) }</td>
+									<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{ fmt.Sprintf("%.2f", s.Total) }</td>
+									<td class="px-3 py-2 text-zinc-300">{ s.PaymentMethod }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+				<div class="md:hidden divide-y divide-zinc-800">
+					for _, s := range limitSlice(report.RecentSales, 5) {
+						<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(s.ID, 10)) } class="block px-4 py-3 active:bg-zinc-800/50 transition">
+							<div class="flex items-center justify-between gap-2">
+								<span class="font-mono text-xs text-lime-400">{ s.Reference }</span>
+								<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-zinc-800 text-zinc-300 border border-zinc-700 tabular-nums">{ strconv.Itoa(s.ItemCount) } items</span>
+							</div>
+							<div class="mt-2 flex items-end justify-between gap-2">
+								<div class="text-xs text-zinc-400 space-y-0.5">
+									<div>{ s.CashierName } · { s.PaymentMethod }</div>
+									<div>{ s.SaleDate.Format("Jan 02, 3:04 PM") }</div>
+								</div>
+								<div class="text-lime-400 font-display text-lg tabular-nums">₱{ fmt.Sprintf("%.2f", s.Total) }</div>
+							</div>
+						</a>
+					}
+				</div>
 			}
 		</div>
 	</div>
 }
 
-templ summaryCard(label string, value string) {
-	<div class="bg-white border border-gray-200 rounded p-3">
-		<div class="text-xs text-gray-500">{ label }</div>
-		<div class="text-lg font-semibold mt-1">{ value }</div>
+templ summaryCard(label, value, sub string) {
+	<div class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-md p-4 transition">
+		<div class="text-xs uppercase tracking-wide text-zinc-400 font-medium">{ label }</div>
+		<div class="mt-1 font-display text-2xl sm:text-3xl text-white tabular-nums">{ value }</div>
+		if sub != "" {
+			<div class="mt-1 text-xs text-zinc-500">{ sub }</div>
+		}
 	</div>
 }
 
 templ dailyBarChart(c reports.Chart) {
-	<svg
-		viewBox={ fmt.Sprintf("0 0 %.0f %.0f", c.Width, c.Height) }
-		class="w-full"
-		preserveAspectRatio="none"
-		xmlns="http://www.w3.org/2000/svg"
-	>
-		<line
-			x1="0"
-			y1={ fmt.Sprintf("%.1f", c.ChartH) }
-			x2={ fmt.Sprintf("%.1f", c.Width) }
-			y2={ fmt.Sprintf("%.1f", c.ChartH) }
-			stroke="#e5e7eb"
-			stroke-width="1"
-		/>
-		for _, b := range c.Bars {
-			<rect
-				x={ fmt.Sprintf("%.1f", b.X) }
-				y={ fmt.Sprintf("%.1f", b.Y) }
-				width={ fmt.Sprintf("%.1f", b.Width) }
-				height={ fmt.Sprintf("%.1f", b.Height) }
-				fill="#111827"
-			>
-				<title>{ b.Label }</title>
-			</rect>
-		}
-	</svg>
-	<div class="flex justify-between text-xs text-gray-500 mt-1">
-		<span>{ c.Days[0].Day.Format("Jan 02") }</span>
-		if len(c.Days) > 2 {
-			<span>{ c.Days[len(c.Days)/2].Day.Format("Jan 02") }</span>
-		}
-		if len(c.Days) > 1 {
-			<span>{ c.Days[len(c.Days)-1].Day.Format("Jan 02") }</span>
-		}
+	<div class="w-full">
+		<svg viewBox={ fmt.Sprintf("0 0 %.0f %.0f", c.Width, c.Height) } class="w-full h-40 sm:h-56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+			<line x1="0" y1={ fmt.Sprintf("%.1f", c.ChartH) } x2={ fmt.Sprintf("%.1f", c.Width) } y2={ fmt.Sprintf("%.1f", c.ChartH) } stroke="rgb(39 39 42)" stroke-width="1"></line>
+			for _, b := range c.Bars {
+				<rect x={ fmt.Sprintf("%.1f", b.X) } y={ fmt.Sprintf("%.1f", b.Y) } width={ fmt.Sprintf("%.1f", b.Width) } height={ fmt.Sprintf("%.1f", b.Height) } rx="2" fill="#a3e635" fill-opacity="0.85">
+					<title>{ b.Label }</title>
+				</rect>
+			}
+		</svg>
+		<div class="flex justify-between text-xs text-zinc-500 mt-2">
+			<span>{ c.Days[0].Day.Format("Jan 02") }</span>
+			if len(c.Days) > 2 {
+				<span>{ c.Days[len(c.Days)/2].Day.Format("Jan 02") }</span>
+			}
+			if len(c.Days) > 1 {
+				<span>{ c.Days[len(c.Days)-1].Day.Format("Jan 02") }</span>
+			}
+		</div>
 	</div>
 }

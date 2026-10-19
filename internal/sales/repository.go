@@ -10,7 +10,6 @@ import (
 	"github.com/jmechavez/vapeshop/internal/database"
 )
 
-// List returns one page of sales matching f, plus the total count.
 func List(ctx context.Context, f Filter, page, perPage int) ([]Sale, int, error) {
 	if page < 1 {
 		page = 1
@@ -140,6 +139,17 @@ func GetByID(ctx context.Context, id int64) (Sale, error) {
 	}
 	s.ItemCount = len(s.Items)
 
+	payRows, err := database.Pool.Query(ctx, `SELECT method, amount::float8 FROM sale_payments WHERE sale_id = $1`, id)
+	if err == nil {
+		defer payRows.Close()
+		for payRows.Next() {
+			var p SplitPayment
+			if err := payRows.Scan(&p.Method, &p.Amount); err == nil {
+				s.Payments = append(s.Payments, p)
+			}
+		}
+	}
+
 	return s, itemRows.Err()
 }
 
@@ -207,6 +217,16 @@ func SearchProducts(ctx context.Context, q string) ([]ProductSuggestion, error) 
 	return out, rows.Err()
 }
 
+func updateSaleTotals(ctx context.Context, tx pgx.Tx, saleID int64) error {
+	_, err := tx.Exec(ctx, `
+		UPDATE sales 
+		SET subtotal = (SELECT COALESCE(SUM(subtotal), 0) FROM sale_items WHERE sale_id = $1),
+		    total = (SELECT COALESCE(SUM(subtotal), 0) FROM sale_items WHERE sale_id = $1) - discount
+		WHERE id = $1
+	`, saleID)
+	return err
+}
+
 func AddItem(ctx context.Context, saleID, productID int64, qty int) error {
 	tx, err := database.Pool.Begin(ctx)
 	if err != nil {
@@ -235,11 +255,23 @@ func AddItem(ctx context.Context, saleID, productID int64, qty int) error {
 	}
 
 	if existingQty > 0 {
-		_, err = tx.Exec(ctx, `UPDATE sale_items SET quantity = quantity + $1, subtotal = (quantity + $1) * unit_price WHERE sale_id = $2 AND product_id = $3`, qty, saleID, productID)
+		_, err = tx.Exec(ctx, `
+			UPDATE sale_items 
+			SET quantity = quantity + $1::int, 
+			    subtotal = (quantity + $1::int)::numeric * unit_price 
+			WHERE sale_id = $2 AND product_id = $3
+		`, qty, saleID, productID)
 	} else {
-		_, err = tx.Exec(ctx, `INSERT INTO sale_items (sale_id, product_id, sku, product_name, quantity, unit_price, subtotal) VALUES ($1, $2, $3, $4, $5, $6, $5 * $6)`, saleID, productID, sku, name, qty, price)
+		_, err = tx.Exec(ctx, `
+			INSERT INTO sale_items (sale_id, product_id, sku, product_name, quantity, unit_price, subtotal) 
+			VALUES ($1, $2, $3, $4, $5::int, $6::numeric, $5::int * $6::numeric)
+		`, saleID, productID, sku, name, qty, price)
 	}
 	if err != nil {
+		return err
+	}
+
+	if err := updateSaleTotals(ctx, tx, saleID); err != nil {
 		return err
 	}
 
@@ -263,9 +295,18 @@ func UpdateItemQty(ctx context.Context, saleID, itemID int64, qty int) error {
 		if stock < qty {
 			return ErrInsufficientStock
 		}
-		_, err = tx.Exec(ctx, `UPDATE sale_items SET quantity = $1, subtotal = $1 * unit_price WHERE id = $2 AND sale_id = $3`, qty, itemID, saleID)
+		_, err = tx.Exec(ctx, `
+			UPDATE sale_items 
+			SET quantity = $1::int, 
+			    subtotal = $1::int * unit_price 
+			WHERE id = $2 AND sale_id = $3
+		`, qty, itemID, saleID)
 	}
 	if err != nil {
+		return err
+	}
+
+	if err := updateSaleTotals(ctx, tx, saleID); err != nil {
 		return err
 	}
 
@@ -273,28 +314,66 @@ func UpdateItemQty(ctx context.Context, saleID, itemID int64, qty int) error {
 }
 
 func RemoveItem(ctx context.Context, saleID, itemID int64) error {
-	_, err := database.Pool.Exec(ctx, `DELETE FROM sale_items WHERE id = $1 AND sale_id = $2`, itemID, saleID)
-	return err
+	tx, err := database.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `DELETE FROM sale_items WHERE id = $1 AND sale_id = $2`, itemID, saleID)
+	if err != nil {
+		return err
+	}
+
+	if err := updateSaleTotals(ctx, tx, saleID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func UpdateDiscount(ctx context.Context, saleID int64, disc float64) error {
-	_, err := database.Pool.Exec(ctx, `UPDATE sales SET discount = $1 WHERE id = $2 AND status = 'pending'`, disc, saleID)
+	_, err := database.Pool.Exec(ctx, `UPDATE sales SET discount = $1, total = subtotal - $1 WHERE id = $2 AND status = 'pending'`, disc, saleID)
 	return err
 }
 
-func UpdatePayment(ctx context.Context, saleID int64, method string) error {
-	valid := false
-	for _, m := range PaymentMethods {
-		if m == method {
-			valid = true
-			break
+func UpdateSplitPayments(ctx context.Context, saleID int64, payments []SplitPayment) error {
+	tx, err := database.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `DELETE FROM sale_payments WHERE sale_id = $1`, saleID)
+	if err != nil {
+		return err
+	}
+
+	primaryMethod := ""
+	for _, p := range payments {
+		if p.Amount > 0 {
+			_, err = tx.Exec(ctx, `INSERT INTO sale_payments (sale_id, method, amount) VALUES ($1, $2, $3)`, saleID, p.Method, p.Amount)
+			if err != nil {
+				return err
+			}
+			if primaryMethod == "" {
+				primaryMethod = p.Method
+			} else if primaryMethod != p.Method {
+				primaryMethod = "Split"
+			}
 		}
 	}
-	if !valid {
-		return fmt.Errorf("invalid payment method")
+
+	if primaryMethod == "" {
+		primaryMethod = PaymentCash
 	}
-	_, err := database.Pool.Exec(ctx, `UPDATE sales SET payment_method = $1 WHERE id = $2 AND status = 'pending'`, method, saleID)
-	return err
+
+	_, err = tx.Exec(ctx, `UPDATE sales SET payment_method = $1 WHERE id = $2`, primaryMethod, saleID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func Complete(ctx context.Context, saleID, userID int64) error {

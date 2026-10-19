@@ -8,8 +8,6 @@ import (
 	"github.com/jmechavez/vapeshop/internal/database"
 )
 
-// normalizeRange ensures From/To are always valid "YYYY-MM-DD" strings.
-// Defaults to the current month when blank. Swaps them if From > To.
 func normalizeRange(r Range) Range {
 	today := time.Now()
 
@@ -25,10 +23,6 @@ func normalizeRange(r Range) Range {
 	}
 	return r
 }
-
-// ---------------------------------------------------------------------------
-// Summary
-// ---------------------------------------------------------------------------
 
 func GetSummary(ctx context.Context, r Range) (Summary, error) {
 	r = normalizeRange(r)
@@ -49,21 +43,18 @@ func GetSummary(ctx context.Context, r Range) (Summary, error) {
 	return s, nil
 }
 
-// ---------------------------------------------------------------------------
-// Payment totals for a range
-// ---------------------------------------------------------------------------
-
 func GetPaymentTotals(ctx context.Context, r Range) (PaymentTotals, error) {
 	r = normalizeRange(r)
 	var p PaymentTotals
 
 	rows, err := database.Pool.Query(ctx, `
-		SELECT payment_method, COALESCE(SUM(total), 0)::float8
-		FROM sales
-		WHERE status = 'completed'
-		  AND sale_date >= $1::date
-		  AND sale_date < ($2::date + INTERVAL '1 day')
-		GROUP BY payment_method
+		SELECT sp.method, COALESCE(SUM(sp.amount), 0)::float8
+		FROM sale_payments sp
+		JOIN sales s ON s.id = sp.sale_id
+		WHERE s.status = 'completed'
+		  AND s.sale_date >= $1::date
+		  AND s.sale_date < ($2::date + INTERVAL '1 day')
+		GROUP BY sp.method
 	`, r.From, r.To)
 	if err != nil {
 		return PaymentTotals{}, err
@@ -89,10 +80,6 @@ func GetPaymentTotals(ctx context.Context, r Range) (PaymentTotals, error) {
 	}
 	return p, rows.Err()
 }
-
-// ---------------------------------------------------------------------------
-// Daily totals (one row per day that had at least one completed sale)
-// ---------------------------------------------------------------------------
 
 func GetDailyTotals(ctx context.Context, r Range) ([]DailyTotal, error) {
 	r = normalizeRange(r)
@@ -124,10 +111,6 @@ func GetDailyTotals(ctx context.Context, r Range) ([]DailyTotal, error) {
 	}
 	return out, rows.Err()
 }
-
-// ---------------------------------------------------------------------------
-// Top products by quantity sold in range
-// ---------------------------------------------------------------------------
 
 func GetTopProducts(ctx context.Context, r Range, limit int) ([]TopProduct, error) {
 	r = normalizeRange(r)
@@ -167,10 +150,6 @@ func GetTopProducts(ctx context.Context, r Range, limit int) ([]TopProduct, erro
 	return out, rows.Err()
 }
 
-// ---------------------------------------------------------------------------
-// Low stock
-// ---------------------------------------------------------------------------
-
 func GetLowStock(ctx context.Context, limit int) ([]LowStock, error) {
 	if limit <= 0 {
 		limit = 20
@@ -206,10 +185,7 @@ func GetLowStock(ctx context.Context, limit int) ([]LowStock, error) {
 	return out, rows.Err()
 }
 
-// ---------------------------------------------------------------------------
-// Recent sales
-// ---------------------------------------------------------------------------
-
+// GetRecentSales now loads the split payments
 func GetRecentSales(ctx context.Context, limit int) ([]RecentSale, error) {
 	if limit <= 0 {
 		limit = 10
@@ -248,12 +224,6 @@ func GetRecentSales(ctx context.Context, limit int) ([]RecentSale, error) {
 	return out, rows.Err()
 }
 
-// ---------------------------------------------------------------------------
-// Chart builder
-// ---------------------------------------------------------------------------
-
-// BuildChart turns daily totals into SVG-ready rectangles so the templ file
-// stays a pure renderer.
 func BuildChart(days []DailyTotal) Chart {
 	const width = 800.0
 	const height = 220.0
@@ -308,11 +278,6 @@ func BuildChart(days []DailyTotal) Chart {
 	return c
 }
 
-// ---------------------------------------------------------------------------
-// Convenience loaders
-// ---------------------------------------------------------------------------
-
-// LoadReport fetches everything the reports page needs for the given range.
 func LoadReport(ctx context.Context, r Range) (Report, error) {
 	r = normalizeRange(r)
 
@@ -353,7 +318,6 @@ func LoadReport(ctx context.Context, r Range) (Report, error) {
 	}, nil
 }
 
-// LoadDashboard fetches the smaller dataset used on the dashboard page.
 func LoadDashboard(ctx context.Context) (Dashboard, error) {
 	today := time.Now().Format("2006-01-02")
 	var d Dashboard

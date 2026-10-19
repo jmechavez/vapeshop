@@ -5,37 +5,34 @@ import (
 	"time"
 )
 
-// Statuses for a sale.
 const (
 	StatusPending   = "pending"
 	StatusCompleted = "completed"
 	StatusVoid      = "void"
 )
 
-// Payment methods (must match the CHECK constraint in the DB).
 const (
 	PaymentCash         = "Cash"
 	PaymentGCash        = "GCash"
 	PaymentMaribank     = "Maribank"
 	PaymentBankTransfer = "Bank Transfer"
+	PaymentSplit        = "Split"
 )
 
-// PaymentMethods is the ordered list used to render the <select> in the UI.
 var PaymentMethods = []string{
 	PaymentCash,
 	PaymentGCash,
 	PaymentMaribank,
 	PaymentBankTransfer,
+	PaymentSplit,
 }
 
-// Statuses is the ordered list used to render the status filter.
 var Statuses = []string{
 	StatusPending,
 	StatusCompleted,
 	StatusVoid,
 }
 
-// VoidReasons is the preset list shown when voiding a sale.
 var VoidReasons = []string{
 	"Customer changed mind",
 	"Wrong item",
@@ -44,7 +41,6 @@ var VoidReasons = []string{
 	"Other",
 }
 
-// Errors returned by the repository.
 var (
 	ErrNotFound          = errors.New("sale not found")
 	ErrInvalidStatus     = errors.New("sale status does not allow this action")
@@ -53,7 +49,11 @@ var (
 	ErrVoidReasonMissing = errors.New("void reason is required")
 )
 
-// Sale represents one row in the sales table.
+type SplitPayment struct {
+	Method string
+	Amount float64
+}
+
 type Sale struct {
 	ID            int64
 	Reference     string
@@ -74,9 +74,9 @@ type Sale struct {
 
 	Items     []SaleItem
 	ItemCount int
+	Payments  []SplitPayment
 }
 
-// SaleItem is one line in a sale.
 type SaleItem struct {
 	ID          int64
 	SaleID      int64
@@ -88,7 +88,6 @@ type SaleItem struct {
 	Subtotal    float64
 }
 
-// Filter is used by the list page.
 type Filter struct {
 	Status    string
 	DateFrom  string
@@ -96,7 +95,6 @@ type Filter struct {
 	Reference string
 }
 
-// ProductSuggestion is a lightweight row returned by the POS search box.
 type ProductSuggestion struct {
 	ID           int64
 	SKU          string
@@ -105,19 +103,16 @@ type ProductSuggestion struct {
 	CurrentStock int
 }
 
-// AddItemInput is used when adding a product to a pending sale's cart.
 type AddItemInput struct {
 	ProductID int64
 	Quantity  int
 }
 
-// VoidInput carries the reason chosen by the user.
 type VoidInput struct {
 	Reason string
 	Note   string
 }
 
-// FinalReason returns the string to store in sales.void_reason.
 func (v VoidInput) FinalReason() string {
 	if v.Reason == "Other" {
 		if v.Note == "" {
@@ -128,7 +123,6 @@ func (v VoidInput) FinalReason() string {
 	return v.Reason
 }
 
-// Page carries pagination metadata for the sales list.
 type Page struct {
 	Page    int
 	PerPage int

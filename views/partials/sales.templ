@@ -19,8 +19,8 @@ templ SaleSuggestions(saleID int64, products []sales.ProductSuggestion) {
 					if p.CurrentStock <= 0 {
 						<div class="w-full px-3 py-3 sm:py-2 flex justify-between items-center gap-3 bg-zinc-950/60 text-zinc-500 cursor-not-allowed">
 							<span class="flex-1 min-w-0">
-								<span class="font-mono text-xs text-zinc-500">{ p.SKU }</span>
-								<span class="ml-2 line-through">{ p.Name }</span>
+								<span class="font-mono text-xs text-zinc-500">{p.SKU}</span>
+								<span class="ml-2 line-through">{p.Name}</span>
 							</span>
 							<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 border border-red-500/30 whitespace-nowrap">
 								Out of stock
@@ -28,17 +28,17 @@ templ SaleSuggestions(saleID int64, products []sales.ProductSuggestion) {
 						</div>
 					} else {
 						<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(saleID, 10) + "/items") }>
-							<input type="hidden" name="product_id" value={ strconv.FormatInt(p.ID, 10) }/>
+							<input type="hidden" name="product_id" value={strconv.FormatInt(p.ID, 10)}/>
 							<input type="hidden" name="quantity" value="1"/>
 							<button type="submit" class="w-full text-left px-3 py-3 sm:py-2 hover:bg-zinc-800/60 active:bg-zinc-800 flex justify-between items-center gap-3 cursor-pointer transition">
 								<span class="flex-1 min-w-0">
-									<span class="font-mono text-xs text-zinc-500">{ p.SKU }</span>
-									<span class="ml-2 text-zinc-100">{ p.Name }</span>
+									<span class="font-mono text-xs text-zinc-500">{p.SKU}</span>
+									<span class="ml-2 text-zinc-100">{p.Name}</span>
 								</span>
 								<span class="text-xs whitespace-nowrap">
-									<span class="text-lime-400 font-medium tabular-nums">₱{ fmt.Sprintf("%.2f", p.SellingPrice) }</span>
+									<span class="text-lime-400 font-medium tabular-nums">₱{fmt.Sprintf("%.2f", p.SellingPrice)}</span>
 									<span class="text-zinc-500"> · stock </span>
-									<span class="text-zinc-300 tabular-nums">{ strconv.Itoa(p.CurrentStock) }</span>
+									<span class="text-zinc-300 tabular-nums">{strconv.Itoa(p.CurrentStock)}</span>
 								</span>
 							</button>
 						</form>
@@ -54,10 +54,10 @@ templ SaleCart(sale sales.Sale) {
 		<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between gap-2">
 			<div class="min-w-0">
 				<div class="font-display italic uppercase tracking-wider text-base text-white">Cart</div>
-				<div class="text-xs text-zinc-500 font-mono truncate">{ sale.Reference }</div>
+				<div class="text-xs text-zinc-500 font-mono truncate">{sale.Reference}</div>
 			</div>
 			<span class="text-xs text-zinc-400 whitespace-nowrap">
-				{ strconv.Itoa(sale.ItemCount) } item(s)
+				{strconv.Itoa(sale.ItemCount)} item(s)
 			</span>
 		</div>
 
@@ -81,34 +81,34 @@ templ SaleCart(sale sales.Sale) {
 					<tbody>
 						for _, it := range sale.Items {
 							<tr class="border-t border-zinc-800">
-								<td class="px-3 py-2 font-mono text-xs text-zinc-300">{ it.SKU }</td>
-								<td class="px-3 py-2 text-zinc-200">{ it.ProductName }</td>
+								<td class="px-3 py-2 font-mono text-xs text-zinc-300">{it.SKU}</td>
+								<td class="px-3 py-2 text-zinc-200">{it.ProductName}</td>
 								<td class="px-3 py-2">
 									<input
 										type="number"
 										name="quantity"
 										min="1"
-										value={ strconv.Itoa(it.Quantity) }
+										value={strconv.Itoa(it.Quantity)}
 										class="w-16 text-base px-2 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
-										hx-put={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10) }
+										hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10)}
 										hx-include="this"
 										hx-trigger="change"
 										hx-target="#cart-panel"
 										hx-swap="outerHTML"
 									/>
 								</td>
-								<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">₱{ fmt.Sprintf("%.2f", it.UnitPrice) }</td>
-								<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</td>
+								<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">₱{fmt.Sprintf("%.2f", it.UnitPrice)}</td>
+								<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{fmt.Sprintf("%.2f", it.Subtotal)}</td>
 								<td class="px-3 py-2 text-right">
 									<button
 										type="button"
 										data-confirm="yes"
 										data-title="Remove Item"
-										data-message={ "Remove " + it.ProductName + " from cart?" }
+										data-message={"Remove " + it.ProductName + " from cart?"}
 										data-confirm-text="Remove"
 										data-destructive="true"
 										data-method="DELETE"
-										data-url={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10) }
+										data-url={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10)}
 										data-target="#cart-panel"
 										class="h-8 w-8 inline-flex items-center justify-center rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition"
 										aria-label="Remove item"
@@ -130,12 +130,12 @@ templ SaleCart(sale sales.Sale) {
 					<div class="px-4 py-3">
 						<div class="flex items-start justify-between gap-2">
 							<div class="min-w-0 flex-1">
-								<div class="font-medium text-white truncate">{ it.ProductName }</div>
-								<div class="text-xs font-mono text-zinc-500 mt-0.5">{ it.SKU }</div>
+								<div class="font-medium text-white truncate">{it.ProductName}</div>
+								<div class="text-xs font-mono text-zinc-500 mt-0.5">{it.SKU}</div>
 							</div>
 							<div class="text-right shrink-0">
-								<div class="text-lime-400 font-display text-base tabular-nums">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</div>
-								<div class="text-xs text-zinc-500 tabular-nums">₱{ fmt.Sprintf("%.2f", it.UnitPrice) } each</div>
+								<div class="text-lime-400 font-display text-base tabular-nums">₱{fmt.Sprintf("%.2f", it.Subtotal)}</div>
+								<div class="text-xs text-zinc-500 tabular-nums">₱{fmt.Sprintf("%.2f", it.UnitPrice)} each</div>
 							</div>
 						</div>
 						<div class="mt-3 flex items-center gap-2">
@@ -143,9 +143,9 @@ templ SaleCart(sale sales.Sale) {
 								type="number"
 								name="quantity"
 								min="1"
-								value={ strconv.Itoa(it.Quantity) }
+								value={strconv.Itoa(it.Quantity)}
 								class="w-20 text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white text-center focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
-								hx-put={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10) }
+								hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10)}
 								hx-include="this"
 								hx-trigger="change"
 								hx-target="#cart-panel"
@@ -155,11 +155,11 @@ templ SaleCart(sale sales.Sale) {
 								type="button"
 								data-confirm="yes"
 								data-title="Remove Item"
-								data-message={ "Remove " + it.ProductName + " from cart?" }
+								data-message={"Remove " + it.ProductName + " from cart?"}
 								data-confirm-text="Remove"
 								data-destructive="true"
 								data-method="DELETE"
-								data-url={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10) }
+								data-url={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10)}
 								data-target="#cart-panel"
 								class="min-h-[40px] ml-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition text-sm"
 							>
@@ -174,7 +174,7 @@ templ SaleCart(sale sales.Sale) {
 		<div class="border-t border-zinc-800 px-4 py-4 space-y-3">
 			<div class="flex justify-between text-sm">
 				<span class="text-zinc-400">Subtotal</span>
-				<span class="text-zinc-200 tabular-nums">₱{ fmt.Sprintf("%.2f", sale.Subtotal) }</span>
+				<span class="text-zinc-200 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Subtotal)}</span>
 			</div>
 
 			<div class="flex justify-between items-center text-sm gap-3">
@@ -184,9 +184,9 @@ templ SaleCart(sale sales.Sale) {
 					name="discount"
 					min="0"
 					step="0.01"
-					value={ fmt.Sprintf("%.2f", sale.Discount) }
+					value={fmt.Sprintf("%.2f", sale.Discount)}
 					class="w-28 text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white text-right focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
-					hx-put={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount" }
+					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
 					hx-include="this"
 					hx-trigger="change"
 					hx-target="#cart-panel"
@@ -194,30 +194,103 @@ templ SaleCart(sale sales.Sale) {
 				/>
 			</div>
 
-			<div class="flex justify-between text-base border-t border-zinc-800 pt-3">
-				<span class="font-display uppercase tracking-wide text-zinc-200">Total</span>
-				<span class="font-display text-xl text-lime-400 tabular-nums">₱{ fmt.Sprintf("%.2f", sale.Total) }</span>
+			<!-- QUICK DISCOUNT BUTTONS (LARGER) -->
+			<div class="flex gap-2">
+				<button type="button" 
+					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
+					hx-vals='{"discount": "50"}'
+					hx-target="#cart-panel" 
+					hx-swap="outerHTML"
+					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition flex items-center justify-center">
+					₱50
+				</button>
+				<button type="button" 
+					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
+					hx-vals='{"discount": "100"}'
+					hx-target="#cart-panel" 
+					hx-swap="outerHTML"
+					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition flex items-center justify-center">
+					₱100
+				</button>
+				<button type="button" 
+					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
+					hx-vals={ `{"discount": "` + fmt.Sprintf("%.2f", sale.Subtotal) + `"}` }
+					hx-target="#cart-panel" 
+					hx-swap="outerHTML"
+					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition flex items-center justify-center">
+					Free
+				</button>
 			</div>
 
-			<div class="flex justify-between items-center text-sm gap-3 pt-1">
-				<span class="text-zinc-400">Payment</span>
-				<select
-					name="payment_method"
-					class="text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
-					hx-put={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/payment" }
-					hx-include="this"
-					hx-trigger="change"
-					hx-target="#cart-panel"
-					hx-swap="outerHTML"
-				>
-					for _, m := range sales.PaymentMethods {
-						if m == sale.PaymentMethod {
-							<option value={ m } selected>{ m }</option>
-						} else {
-							<option value={ m }>{ m }</option>
-						}
-					}
-				</select>
+			<div class="flex justify-between text-base border-t border-zinc-800 pt-3">
+				<span class="font-display uppercase tracking-wide text-zinc-200">Total</span>
+				<span class="font-display text-xl text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Total)}</span>
+			</div>
+
+			<!-- TRUE SPLIT PAYMENT SECTION -->
+			<div class="space-y-2 border-t border-zinc-800 pt-3">
+				<div class="text-xs font-medium text-zinc-400">Payment Breakdown</div>
+				
+				<div class="flex items-center justify-between gap-2">
+					<label class="text-sm text-zinc-300">Cash</label>
+					<input type="number" name="amount_cash" step="0.01" min="0" placeholder="0.00" 
+						value={func() string { for _, p := range sale.Payments { if p.Method == "Cash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
+						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
+						hx-trigger="change"
+						hx-include="closest .space-y-2"
+						hx-target="#cart-panel" 
+						hx-swap="outerHTML"
+					/>
+				</div>
+
+				<div class="flex items-center justify-between gap-2">
+					<label class="text-sm text-zinc-300">GCash</label>
+					<input type="number" name="amount_gcash" step="0.01" min="0" placeholder="0.00" 
+						value={func() string { for _, p := range sale.Payments { if p.Method == "GCash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
+						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
+						hx-trigger="change"
+						hx-include="closest .space-y-2"
+						hx-target="#cart-panel" 
+						hx-swap="outerHTML"
+					/>
+				</div>
+
+				<div class="flex items-center justify-between gap-2">
+					<label class="text-sm text-zinc-300">Maribank</label>
+					<input type="number" name="amount_maribank" step="0.01" min="0" placeholder="0.00" 
+						value={func() string { for _, p := range sale.Payments { if p.Method == "Maribank" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
+						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
+						hx-trigger="change"
+						hx-include="closest .space-y-2"
+						hx-target="#cart-panel" 
+						hx-swap="outerHTML"
+					/>
+				</div>
+
+				<div class="flex items-center justify-between gap-2">
+					<label class="text-sm text-zinc-300">Bank Transfer</label>
+					<input type="number" name="amount_bank" step="0.01" min="0" placeholder="0.00" 
+						value={func() string { for _, p := range sale.Payments { if p.Method == "Bank Transfer" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
+						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
+						hx-trigger="change"
+						hx-include="closest .space-y-2"
+						hx-target="#cart-panel" 
+						hx-swap="outerHTML"
+					/>
+				</div>
+				
+				<!-- PAY FULL IN CASH BUTTON (LARGER) -->
+				<button type="button" 
+					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
+					hx-vals={ `{"amount_cash": "` + fmt.Sprintf("%.2f", sale.Total) + `", "amount_gcash": "0", "amount_maribank": "0", "amount_bank": "0"}` }
+					hx-target="#cart-panel" hx-swap="outerHTML"
+					class="w-full min-h-[44px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition">
+					Pay Full in Cash
+				</button>
 			</div>
 
 			<div class="hidden sm:flex flex-col sm:flex-row gap-2 pt-2">
@@ -236,7 +309,7 @@ templ SaleCart(sale sales.Sale) {
 					data-confirm-text="Complete"
 					data-destructive="false"
 					data-method="POST"
-					data-url={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete" }
+					data-url={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete"}
 					data-target="body"
 				>
 					Complete sale

@@ -14,16 +14,11 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 	@layouts.Shell(sess, "Sales", "Sales") {
 		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6">
 			<div>
-				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">
-					Sales
-				</h1>
+				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">Sales</h1>
 				<p class="text-sm text-zinc-400 mt-2">Recent transactions and pending carts.</p>
 			</div>
 			<a href="/sales/new" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition self-start sm:self-auto sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-					<line x1="12" y1="5" x2="12" y2="19"></line>
-					<line x1="5" y1="12" x2="19" y2="12"></line>
-				</svg>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="12" y1="5" x2="12" y2="19"></line> <line x1="5" y1="12" x2="19" y2="12"></line></svg>
 				New Sale
 			</a>
 		</div>
@@ -39,24 +34,24 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 					}
 					for _, s := range sales.Statuses {
 						if s == f.Status {
-							<option value={ s } selected>{ s }</option>
+							<option value={s} selected>{s}</option>
 						} else {
-							<option value={ s }>{ s }</option>
+							<option value={s}>{s}</option>
 						}
 					}
 				</select>
 			</div>
 			<div>
 				<label class="block text-xs font-medium text-zinc-400 mb-1">From</label>
-				<input type="date" name="from" value={ f.DateFrom } class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
+				<input type="date" name="from" value={f.DateFrom} class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
 			</div>
 			<div>
 				<label class="block text-xs font-medium text-zinc-400 mb-1">To</label>
-				<input type="date" name="to" value={ f.DateTo } class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
+				<input type="date" name="to" value={f.DateTo} class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
 			</div>
 			<div>
 				<label class="block text-xs font-medium text-zinc-400 mb-1">Reference</label>
-				<input type="text" name="ref" value={ f.Reference } placeholder="S-2025…" class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
+				<input type="text" name="ref" value={f.Reference} placeholder="S-2025…" class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"/>
 			</div>
 			<div class="md:col-span-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
 				<a href="/sales" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Reset</a>
@@ -68,11 +63,7 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 			if len(list) == 0 {
 				<div class="px-6 py-12 text-center">
 					<div class="mx-auto h-10 w-10 rounded-full border border-zinc-800 flex items-center justify-center mb-3">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-zinc-500">
-							<circle cx="9" cy="21" r="1"></circle>
-							<circle cx="20" cy="21" r="1"></circle>
-							<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-						</svg>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-zinc-500"><circle cx="9" cy="21" r="1"></circle> <circle cx="20" cy="21" r="1"></circle> <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
 					</div>
 					<p class="text-zinc-400 text-sm">No sales found.</p>
 					<a href="/sales/new" class="mt-3 inline-block text-lime-400 hover:text-lime-300 text-sm">Start a sale →</a>
@@ -94,14 +85,12 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 						<tbody>
 							for _, s := range list {
 								<tr class="border-t border-zinc-800 hover:bg-zinc-800/40 transition">
-									<td class="px-3 py-2">
-										<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(s.ID, 10)) } class="font-mono text-xs text-lime-400 hover:text-lime-300">{ s.Reference }</a>
-									</td>
-									<td class="px-3 py-2 text-zinc-400 text-xs whitespace-nowrap">{ s.SaleDate.Format("2006-01-02 15:04") }</td>
-									<td class="px-3 py-2 text-zinc-300">{ s.CashierName }</td>
-									<td class="px-3 py-2 text-right text-zinc-400 tabular-nums">{ strconv.Itoa(s.ItemCount) }</td>
-									<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{ fmt.Sprintf("%.2f", s.Total) }</td>
-									<td class="px-3 py-2 text-zinc-300">{ s.PaymentMethod }</td>
+									<td class="px-3 py-2"><a href={ templ.SafeURL("/sales/" + strconv.FormatInt(s.ID, 10)) } class="font-mono text-xs text-lime-400 hover:text-lime-300">{s.Reference}</a></td>
+									<td class="px-3 py-2 text-zinc-400 text-xs whitespace-nowrap">{s.SaleDate.Format("2006-01-02 15:04")}</td>
+									<td class="px-3 py-2 text-zinc-300">{s.CashierName}</td>
+									<td class="px-3 py-2 text-right text-zinc-400 tabular-nums">{strconv.Itoa(s.ItemCount)}</td>
+									<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{fmt.Sprintf("%.2f", s.Total)}</td>
+									<td class="px-3 py-2 text-zinc-300">{s.PaymentMethod}</td>
 									<td class="px-3 py-2">@statusBadge(s.Status)</td>
 								</tr>
 							}
@@ -112,49 +101,65 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 					for _, s := range list {
 						<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(s.ID, 10)) } class="block px-4 py-3 active:bg-zinc-800/50 transition">
 							<div class="flex items-center justify-between gap-2">
-								<span class="font-mono text-xs text-lime-400">{ s.Reference }</span>
+								<span class="font-mono text-xs text-lime-400">{s.Reference}</span>
 								@statusBadge(s.Status)
 							</div>
 							<div class="mt-2 flex items-end justify-between gap-2">
 								<div class="text-xs text-zinc-400 space-y-0.5">
-									<div>{ s.CashierName } · { s.PaymentMethod }</div>
-									<div>{ s.SaleDate.Format("Jan 02, 3:04 PM") } · { strconv.Itoa(s.ItemCount) } item(s)</div>
+									<div>{s.CashierName} · {s.PaymentMethod}</div>
+									<div>{s.SaleDate.Format("Jan 02, 3:04 PM")} · {strconv.Itoa(s.ItemCount)} item(s)</div>
 								</div>
-								<div class="text-lime-400 font-display text-lg tabular-nums">₱{ fmt.Sprintf("%.2f", s.Total) }</div>
+								<div class="text-lime-400 font-display text-lg tabular-nums">₱{fmt.Sprintf("%.2f", s.Total)}</div>
 							</div>
 						</a>
 					}
 				</div>
-				if page.Total > 0 {
-					<div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-zinc-800 bg-zinc-950/40 text-sm">
-						<div class="text-zinc-400 tabular-nums">
-							Showing <span class="text-zinc-200">{ fmt.Sprint(page.From()) }</span>–<span class="text-zinc-200">{ fmt.Sprint(page.To()) }</span>
-							of <span class="text-zinc-200">{ fmt.Sprint(page.Total) }</span>
-						</div>
-						<div class="flex items-center gap-1">
-							<a href={ templ.SafeURL(salesPageURL(f, page.Page-1)) } class={ "min-h-[36px] px-3 py-1.5 rounded-sm border transition", templ.KV("border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white active:scale-95", page.HasPrev()), templ.KV("border-zinc-800/50 text-zinc-600 cursor-not-allowed pointer-events-none", !page.HasPrev()) }>‹ Prev</a>
-							<span class="px-3 text-zinc-400 tabular-nums">Page <span class="text-zinc-200">{ fmt.Sprint(page.Page) }</span> of <span class="text-zinc-200">{ fmt.Sprint(page.TotalPages()) }</span></span>
-							<a href={ templ.SafeURL(salesPageURL(f, page.Page+1)) } class={ "min-h-[36px] px-3 py-1.5 rounded-sm border transition", templ.KV("border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white active:scale-95", page.HasNext()), templ.KV("border-zinc-800/50 text-zinc-600 cursor-not-allowed pointer-events-none", !page.HasNext()) }>Next ›</a>
-						</div>
-					</div>
-				}
 			}
 		</div>
+
+		if page.Total > 0 {
+			<div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-zinc-800 bg-zinc-950/40 text-sm">
+				<div class="text-zinc-400 tabular-nums">
+					Showing <span class="text-zinc-200">{fmt.Sprint(page.From())}</span>–<span class="text-zinc-200">{fmt.Sprint(page.To())}</span> of <span class="text-zinc-200">{fmt.Sprint(page.Total)}</span>
+				</div>
+				<div class="flex items-center gap-1">
+					<a href={ templ.SafeURL(salesPageURL(f, page.Page-1)) } class={ "min-h-[36px] px-3 py-1.5 rounded-sm border transition", templ.KV("border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white active:scale-95", page.HasPrev()), templ.KV("border-zinc-800/50 text-zinc-600 cursor-not-allowed pointer-events-none", !page.HasPrev()) }>‹ Prev</a>
+					<span class="px-3 text-zinc-400 tabular-nums">Page <span class="text-zinc-200">{fmt.Sprint(page.Page)}</span> of <span class="text-zinc-200">{fmt.Sprint(page.TotalPages())}</span></span>
+					<a href={ templ.SafeURL(salesPageURL(f, page.Page+1)) } class={ "min-h-[36px] px-3 py-1.5 rounded-sm border transition", templ.KV("border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white active:scale-95", page.HasNext()), templ.KV("border-zinc-800/50 text-zinc-600 cursor-not-allowed pointer-events-none", !page.HasNext()) }>Next ›</a>
+				</div>
+			</div>
+		}
 	}
 }
 
 func salesPageURL(f sales.Filter, page int) string {
-	if page < 1 { page = 1 }
+	if page < 1 {
+		page = 1
+	}
 	parts := []string{}
-	if f.Status != "" { parts = append(parts, "status="+f.Status) }
-	if f.DateFrom != "" { parts = append(parts, "from="+f.DateFrom) }
-	if f.DateTo != "" { parts = append(parts, "to="+f.DateTo) }
-	if f.Reference != "" { parts = append(parts, "ref="+f.Reference) }
-	if page > 1 { parts = append(parts, fmt.Sprintf("page=%d", page)) }
-	if len(parts) == 0 { return "/sales" }
+	if f.Status != "" {
+		parts = append(parts, "status="+f.Status)
+	}
+	if f.DateFrom != "" {
+		parts = append(parts, "from="+f.DateFrom)
+	}
+	if f.DateTo != "" {
+		parts = append(parts, "to="+f.DateTo)
+	}
+	if f.Reference != "" {
+		parts = append(parts, "ref="+f.Reference)
+	}
+	if page > 1 {
+		parts = append(parts, fmt.Sprintf("page=%d", page))
+	}
+	if len(parts) == 0 {
+		return "/sales"
+	}
 	out := "/sales?"
 	for i, p := range parts {
-		if i > 0 { out += "&" }
+		if i > 0 {
+			out += "&"
+		}
 		out += p
 	}
 	return out
@@ -165,7 +170,7 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6">
 			<div>
 				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">New Sale</h1>
-				<p class="text-sm text-zinc-400 mt-2">Reference <span class="font-mono text-zinc-300">{ sale.Reference }</span></p>
+				<p class="text-sm text-zinc-400 mt-2">Reference <span class="font-mono text-zinc-300">{sale.Reference}</span></p>
 			</div>
 			<a href="/sales" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto">← Back to sales</a>
 		</div>
@@ -174,15 +179,24 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
 				<div>
 					<div class="relative">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" style="width:1rem;height:1rem;">
-							<circle cx="11" cy="11" r="8"></circle>
-							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-						</svg>
-						<input type="text" name="q" placeholder="Search product by name or SKU…" autocomplete="off" class="w-full text-base pl-10 pr-3 py-3 sm:py-2 bg-zinc-900 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition" hx-get={ "/sales/search-products?sale=" + strconv.FormatInt(sale.ID, 10) } hx-trigger="keyup changed delay:300ms, search" hx-target="#suggestions" hx-swap="innerHTML"/>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" style="width:1rem;height:1rem;"><circle cx="11" cy="11" r="8"></circle> <line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+						<input
+							type="text"
+							name="q"
+							placeholder="Search product by name or SKU…"
+							autocomplete="off"
+							class="w-full text-base pl-10 pr-3 py-3 sm:py-2 bg-zinc-900 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
+							hx-get={"/sales/search-products?sale=" + strconv.FormatInt(sale.ID, 10)}
+							hx-trigger="keyup changed delay:300ms, search"
+							hx-target="#suggestions"
+							hx-swap="innerHTML"
+						/>
 					</div>
 					<div id="suggestions" class="mt-2"></div>
 				</div>
-				<div>@partials.SaleCart(sale)</div>
+				<div>
+					@partials.SaleCart(sale)
+				</div>
 			</div>
 		</div>
 
@@ -190,25 +204,13 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 			<div class="px-4 py-3 flex items-center gap-3">
 				<div class="flex-1 min-w-0">
 					<div class="text-[10px] uppercase tracking-wide text-zinc-500">Total</div>
-					<div class="font-display text-lg text-lime-400 tabular-nums truncate">₱{ fmt.Sprintf("%.2f", sale.Total) }</div>
+					<div class="font-display text-lg text-lime-400 tabular-nums truncate">₱{fmt.Sprintf("%.2f", sale.Total)}</div>
 				</div>
-				<button
-					type="button"
-					class={ "min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
-					if len(sale.Items) == 0 {
-						disabled
-					}
-					data-confirm="yes"
-					data-title="Complete Sale"
-					data-message="Complete this sale? Stock will be deducted."
-					data-confirm-text="Complete"
-					data-destructive="false"
-					data-method="POST"
-					data-url={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete" }
-					data-target="body"
-				>
-					Complete Sale
-				</button>
+				<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="m-0">
+					<button type="submit" class={ "min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) } disabled?={ len(sale.Items) == 0 }>
+						Complete Sale
+					</button>
+				</form>
 			</div>
 		</div>
 	}
@@ -218,12 +220,8 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 	@layouts.Shell(sess, "Sale "+sale.Reference, "Sales") {
 		<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-6">
 			<div class="min-w-0">
-				<div class="text-xs text-zinc-500 mb-1">
-					<a href="/sales" class="hover:text-lime-400 transition">Sales</a>
-					<span class="text-zinc-700"> / </span>
-					<span class="font-mono">{ sale.Reference }</span>
-				</div>
-				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none truncate">{ sale.Reference }</h1>
+				<div class="text-xs text-zinc-500 mb-1"><a href="/sales" class="hover:text-lime-400 transition">Sales</a> <span class="text-zinc-700">/ </span> <span class="font-mono">{sale.Reference}</span></div>
+				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none truncate">{sale.Reference}</h1>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
 				<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/receipt") } class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">Print receipt</a>
@@ -234,7 +232,23 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 		<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
 			@infoCard("Date", sale.SaleDate.Format("2006-01-02 15:04"))
 			@infoCard("Cashier", sale.CashierName)
-			@infoCard("Payment", sale.PaymentMethod)
+			
+			<div class="bg-zinc-900 border border-zinc-800 rounded-md p-3">
+				<div class="text-[10px] uppercase tracking-wide text-zinc-500">Payment</div>
+				<div class="mt-1 space-y-1 text-sm text-zinc-200">
+					if len(sale.Payments) == 0 {
+						<div>{sale.PaymentMethod}</div>
+					} else {
+						for _, p := range sale.Payments {
+							<div class="flex justify-between">
+								<span>{p.Method}</span>
+								<span class="tabular-nums">₱{fmt.Sprintf("%.2f", p.Amount)}</span>
+							</div>
+						}
+					}
+				</div>
+			</div>
+
 			<div class="bg-zinc-900 border border-zinc-800 rounded-md p-3">
 				<div class="text-[10px] uppercase tracking-wide text-zinc-500">Status</div>
 				<div class="mt-1">@statusBadge(sale.Status)</div>
@@ -245,13 +259,13 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 			<div class="bg-red-500/10 border border-red-500/40 rounded-md p-4 text-sm text-red-500 mb-4">
 				<div class="font-display uppercase tracking-wide mb-2">This sale is void</div>
 				if sale.VoidReason != "" {
-					<div><span class="text-red-400">Reason:</span> <span class="text-red-200">{ sale.VoidReason }</span></div>
+					<div><span class="text-red-400">Reason:</span> <span class="text-red-200">{sale.VoidReason}</span></div>
 				}
 				if sale.VoidedByName != "" {
-					<div><span class="text-red-400">Voided by:</span> <span class="text-red-200">{ sale.VoidedByName }</span></div>
+					<div><span class="text-red-400">Voided by:</span> <span class="text-red-200">{sale.VoidedByName}</span></div>
 				}
 				if sale.VoidedAt != nil {
-					<div><span class="text-red-400">Voided at:</span> <span class="text-red-200">{ sale.VoidedAt.Format("2006-01-02 15:04") }</span></div>
+					<div><span class="text-red-400">Voided at:</span> <span class="text-red-200">{sale.VoidedAt.Format("2006-01-02 15:04")}</span></div>
 				}
 			</div>
 		}
@@ -277,11 +291,11 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 						<tbody>
 							for _, it := range sale.Items {
 								<tr class="border-t border-zinc-800">
-									<td class="px-3 py-2 font-mono text-xs text-zinc-300">{ it.SKU }</td>
-									<td class="px-3 py-2 text-zinc-200">{ it.ProductName }</td>
-									<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">{ strconv.Itoa(it.Quantity) }</td>
-									<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">₱{ fmt.Sprintf("%.2f", it.UnitPrice) }</td>
-									<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</td>
+									<td class="px-3 py-2 font-mono text-xs text-zinc-300">{it.SKU}</td>
+									<td class="px-3 py-2 text-zinc-200">{it.ProductName}</td>
+									<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">{strconv.Itoa(it.Quantity)}</td>
+									<td class="px-3 py-2 text-right text-zinc-300 tabular-nums">₱{fmt.Sprintf("%.2f", it.UnitPrice)}</td>
+									<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{fmt.Sprintf("%.2f", it.Subtotal)}</td>
 								</tr>
 							}
 						</tbody>
@@ -292,12 +306,12 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 						<div class="px-4 py-3">
 							<div class="flex items-start justify-between gap-2">
 								<div class="min-w-0 flex-1">
-									<div class="font-medium text-white truncate">{ it.ProductName }</div>
-									<div class="text-xs font-mono text-zinc-500 mt-0.5">{ it.SKU }</div>
+									<div class="font-medium text-white truncate">{it.ProductName}</div>
+									<div class="text-xs font-mono text-zinc-500 mt-0.5">{it.SKU}</div>
 								</div>
 								<div class="text-right shrink-0">
-									<div class="text-lime-400 font-display text-base tabular-nums">₱{ fmt.Sprintf("%.2f", it.Subtotal) }</div>
-									<div class="text-xs text-zinc-500 tabular-nums">{ strconv.Itoa(it.Quantity) } × ₱{ fmt.Sprintf("%.2f", it.UnitPrice) }</div>
+									<div class="text-lime-400 font-display text-base tabular-nums">₱{fmt.Sprintf("%.2f", it.Subtotal)}</div>
+									<div class="text-xs text-zinc-500 tabular-nums">{strconv.Itoa(it.Quantity)} × ₱{fmt.Sprintf("%.2f", it.UnitPrice)}</div>
 								</div>
 							</div>
 						</div>
@@ -307,9 +321,9 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 		</div>
 
 		<div class="bg-zinc-900 border border-zinc-800 rounded-md p-4 max-w-md sm:ml-auto text-sm space-y-2">
-			<div class="flex justify-between text-zinc-300"><span>Subtotal</span><span class="tabular-nums">₱{ fmt.Sprintf("%.2f", sale.Subtotal) }</span></div>
-			<div class="flex justify-between text-zinc-300"><span>Discount</span><span class="tabular-nums">₱{ fmt.Sprintf("%.2f", sale.Discount) }</span></div>
-			<div class="flex justify-between font-display text-lg border-t border-zinc-800 pt-2"><span>Total</span><span class="text-lime-400 tabular-nums">₱{ fmt.Sprintf("%.2f", sale.Total) }</span></div>
+			<div class="flex justify-between text-zinc-300"><span>Subtotal</span><span class="tabular-nums">₱{fmt.Sprintf("%.2f", sale.Subtotal)}</span></div>
+			<div class="flex justify-between text-zinc-300"><span>Discount</span><span class="tabular-nums">₱{fmt.Sprintf("%.2f", sale.Discount)}</span></div>
+			<div class="flex justify-between font-display text-lg border-t border-zinc-800 pt-2"><span>Total</span><span class="text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Total)}</span></div>
 		</div>
 
 		if sale.Status != sales.StatusVoid {
@@ -334,7 +348,7 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 							<select name="reason" required onchange="toggleVoidNote(this)" class="w-full text-base px-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition">
 								<option value="">Choose a reason…</option>
 								for _, r := range sales.VoidReasons {
-									<option value={ r }>{ r }</option>
+									<option value={r}>{r}</option>
 								}
 							</select>
 						</label>
@@ -344,7 +358,7 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 						</label>
 						<div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
 							<button type="button" onclick="closeModal('void-modal')" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Cancel</button>
-							<button type="button" data-confirm="yes" data-title="Void Sale" data-message="Void this sale? Stock will be restored." data-confirm-text="Void" data-destructive="true" data-method="POST" data-url={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/void" } data-target="body" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-red-500 text-white font-semibold uppercase tracking-wide text-sm hover:bg-red-400 active:scale-95 transition">Confirm void</button>
+							<button type="submit" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-red-500 text-white font-semibold uppercase tracking-wide text-sm hover:bg-red-400 active:scale-95 transition">Confirm void</button>
 						</div>
 					</form>
 				</div>
@@ -354,7 +368,9 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 		if sale.Status == sales.StatusPending {
 			<div class="mt-6 flex flex-col sm:flex-row gap-2">
 				<a href={ templ.SafeURL("/sales/new?sale=" + strconv.FormatInt(sale.ID, 10)) } class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">Continue editing</a>
-				<button type="button" data-confirm="yes" data-title="Complete Sale" data-message="Complete this sale? Stock will be deducted." data-confirm-text="Complete" data-destructive="false" data-method="POST" data-url={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete" } data-target="body" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">Complete sale</button>
+				<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="m-0">
+					<button type="submit" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">Complete sale</button>
+				</form>
 			</div>
 		}
 	}
@@ -362,7 +378,7 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 
 templ infoCard(label, value string) {
 	<div class="bg-zinc-900 border border-zinc-800 rounded-md p-3">
-		<div class="text-[10px] uppercase tracking-wide text-zinc-500">{ label }</div>
-		<div class="text-sm text-zinc-200 mt-1 truncate">{ value }</div>
+		<div class="text-[10px] uppercase tracking-wide text-zinc-500">{label}</div>
+		<div class="text-sm text-zinc-200 mt-1 truncate">{value}</div>
 	</div>
 }

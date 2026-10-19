@@ -219,7 +219,7 @@ func main() {
 		pr.Put("/sales/{id}/items/{itemID}", salesHandler.UpdateItemQty)
 		pr.Delete("/sales/{id}/items/{itemID}", salesHandler.RemoveItem)
 		pr.Put("/sales/{id}/discount", salesHandler.UpdateDiscount)
-		pr.Put("/sales/{id}/payment", salesHandler.UpdatePayment)
+		pr.Put("/sales/{id}/split-payments", salesHandler.UpdateSplitPayments)
 		pr.Post("/sales/{id}/complete", salesHandler.Complete)
 		pr.Post("/sales/{id}/void", salesHandler.Void)
 

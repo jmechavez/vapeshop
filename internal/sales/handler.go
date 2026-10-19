@@ -283,18 +283,38 @@ func (h *Handler) UpdateDiscount(w http.ResponseWriter, r *http.Request) {
 	h.renderCart(w, r, id)
 }
 
-func (h *Handler) UpdatePayment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateSplitPayments(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
 		h.fail(w, r, http.StatusBadRequest, "invalid id")
 		return
 	}
-	method := strings.TrimSpace(r.FormValue("payment_method"))
-	if err := UpdatePayment(r.Context(), id, method); err != nil {
-		if strings.HasPrefix(err.Error(), "invalid payment method") {
-			h.fail(w, r, http.StatusBadRequest, err.Error())
-			return
+
+	_ = r.ParseForm()
+	var payments []SplitPayment
+
+	if cash := r.FormValue("amount_cash"); cash != "" {
+		if amt, err := strconv.ParseFloat(cash, 64); err == nil && amt > 0 {
+			payments = append(payments, SplitPayment{Method: PaymentCash, Amount: amt})
 		}
+	}
+	if gcash := r.FormValue("amount_gcash"); gcash != "" {
+		if amt, err := strconv.ParseFloat(gcash, 64); err == nil && amt > 0 {
+			payments = append(payments, SplitPayment{Method: PaymentGCash, Amount: amt})
+		}
+	}
+	if maribank := r.FormValue("amount_maribank"); maribank != "" {
+		if amt, err := strconv.ParseFloat(maribank, 64); err == nil && amt > 0 {
+			payments = append(payments, SplitPayment{Method: PaymentMaribank, Amount: amt})
+		}
+	}
+	if bank := r.FormValue("amount_bank"); bank != "" {
+		if amt, err := strconv.ParseFloat(bank, 64); err == nil && amt > 0 {
+			payments = append(payments, SplitPayment{Method: PaymentBankTransfer, Amount: amt})
+		}
+	}
+
+	if err := UpdateSplitPayments(r.Context(), id, payments); err != nil {
 		h.handleRepoError(w, r, err)
 		return
 	}

@@ -102,7 +102,27 @@ func main() {
 	sb.WriteString(fmt.Sprintf("• Bank Transfer: ₱%.2f\n", monthPayments.BankTransfer))
 	sb.WriteString(fmt.Sprintf("*TOTAL:* ₱%.2f\n\n", monthPayments.Total()))
 
-	// 4. Send to Telegram
+	// --- 4. Fetch Partner Stock Sales (Today) ---
+	var partnerTotal float64
+	var partnerCount int
+	_ = pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(si.subtotal), 0), COUNT(DISTINCT s.id)
+		FROM sale_items si
+		JOIN sales s ON s.id = si.sale_id
+		JOIN products p ON p.id = si.product_id
+		WHERE s.status = 'completed'
+		AND s.sale_date >= $1 AND s.sale_date < $2
+		AND p.is_partner_stock = TRUE
+	`, startOfDay, endOfDay).Scan(&partnerTotal, &partnerCount)
+
+	if partnerTotal > 0 {
+		sb.WriteString("\n🤝 *PARTNER STOCK SALES (Today)*\n")
+		sb.WriteString(fmt.Sprintf("• Items Sold: %d\n", partnerCount))
+		sb.WriteString(fmt.Sprintf("• Total: ₱%.2f\n", partnerTotal))
+		sb.WriteString("*This amount belongs to the consignor.*\n")
+	}
+
+	// 5. Send to Telegram
 	sendTelegramMessage(botToken, chatID, sb.String())
 }
 

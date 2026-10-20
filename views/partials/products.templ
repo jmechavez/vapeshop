@@ -186,6 +186,7 @@ templ ProductRowEdit(p products.ProductWithStock, errMsg string) {
 		<input type="hidden" name="category" value={p.Category}/>
 		<input type="hidden" name="cost_price" value={formatFloat(p.CostPrice)}/>
 		<input type="hidden" name="minimum_stock" value={strconv.Itoa(p.MinimumStock)}/>
+		<input type="hidden" name="is_partner_stock" value={strconv.FormatBool(p.IsPartnerStock)}/>
 
 		<td class="px-3 py-2">
 			<input name="sku" value={p.SKU} required class="w-28 px-2 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30"/>
@@ -240,6 +241,13 @@ templ ProductFormModal(p products.Product, errMsg string) {
 					@numberField("selling_price", "Selling price", p.SellingPrice)
 					@intField("minimum_stock", "Minimum stock", p.MinimumStock)
 				</div>
+
+				<label class="flex items-center gap-2 mt-2">
+					<input type="checkbox" name="is_partner_stock" value="true" checked?={p.IsPartnerStock} 
+						class="h-4 w-4 rounded border-zinc-800 bg-zinc-950 text-lime-400 focus:ring-lime-400/30" />
+					<span class="text-sm text-zinc-300">This is Partner Stock (not mine)</span>
+				</label>
+
 				<div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
 					<button type="button" onclick="closeModal('product-modal')" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Cancel</button>
 					<button type="submit" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">Save Product</button>
@@ -271,6 +279,13 @@ templ ProductEditModal(p products.Product) {
 					@numberField("selling_price", "Selling price", p.SellingPrice)
 					@intField("minimum_stock", "Minimum stock", p.MinimumStock)
 				</div>
+
+				<label class="flex items-center gap-2 mt-2">
+					<input type="checkbox" name="is_partner_stock" value="true" checked?={p.IsPartnerStock} 
+						class="h-4 w-4 rounded border-zinc-800 bg-zinc-950 text-lime-400 focus:ring-lime-400/30" />
+					<span class="text-sm text-zinc-300">This is Partner Stock (not mine)</span>
+				</label>
+
 				<div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
 					<button type="button" onclick="closeModal('product-edit-modal')" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Cancel</button>
 					<button type="submit" class="min-h-[44px] px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">Save Changes</button>

@@ -1,4 +1,3 @@
-// internal/products/repository.go
 package products
 
 import (
@@ -8,20 +7,13 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmechavez/vapeshop/internal/database"
 )
-
-type Repository struct {
-	db *pgxpool.Pool
-}
 
 var (
 	ErrNotFound = errors.New("product: not found")
 )
 
-// List returns one page of active products (filtered by q) plus the total
-// count of matching rows. perPage defaults to 25, page defaults to 1.
 func List(ctx context.Context, q string, page, perPage int) ([]ProductWithStock, int, error) {
 	if page < 1 {
 		page = 1
@@ -52,12 +44,7 @@ func List(ctx context.Context, q string, page, perPage int) ([]ProductWithStock,
 		where += " AND " + strings.Join(conds, " AND ")
 	}
 
-	countSQL := fmt.Sprintf(`
-		SELECT COUNT(*)
-		FROM products p
-		%s
-	`, where)
-
+	countSQL := fmt.Sprintf(`SELECT COUNT(*) FROM products p %s`, where)
 	var total int
 	if err := database.Pool.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count products: %w", err)
@@ -69,7 +56,7 @@ func List(ctx context.Context, q string, page, perPage int) ([]ProductWithStock,
 			COALESCE(p.brand,''), COALESCE(p.version,''), COALESCE(p.flavor,''),
 			COALESCE(p.category,''),
 			p.cost_price::float8, p.selling_price::float8,
-			p.minimum_stock, p.active, p.created_at, p.updated_at,
+			p.minimum_stock, p.is_partner_stock, p.active, p.created_at, p.updated_at,
 			COALESCE(i.current_stock, 0)
 		FROM products p
 		LEFT JOIN inventory i ON i.product_id = p.id
@@ -91,7 +78,7 @@ func List(ctx context.Context, q string, page, perPage int) ([]ProductWithStock,
 			&p.ID, &p.SKU, &p.Barcode, &p.Name,
 			&p.Brand, &p.Version, &p.Flavor, &p.Category,
 			&p.CostPrice, &p.SellingPrice,
-			&p.MinimumStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
+			&p.MinimumStock, &p.IsPartnerStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
 			&p.CurrentStock,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scan product: %w", err)
@@ -101,7 +88,6 @@ func List(ctx context.Context, q string, page, perPage int) ([]ProductWithStock,
 	return out, total, rows.Err()
 }
 
-// ListAll — no filter, no pagination. Used by OOB refresh after create/edit.
 func ListAll(ctx context.Context) ([]ProductWithStock, error) {
 	const q = `
 		SELECT
@@ -109,7 +95,7 @@ func ListAll(ctx context.Context) ([]ProductWithStock, error) {
 			COALESCE(p.brand,''), COALESCE(p.version,''), COALESCE(p.flavor,''),
 			COALESCE(p.category,''),
 			p.cost_price::float8, p.selling_price::float8,
-			p.minimum_stock, p.active, p.created_at, p.updated_at,
+			p.minimum_stock, p.is_partner_stock, p.active, p.created_at, p.updated_at,
 			COALESCE(i.current_stock, 0)
 		FROM products p
 		LEFT JOIN inventory i ON i.product_id = p.id
@@ -130,7 +116,7 @@ func ListAll(ctx context.Context) ([]ProductWithStock, error) {
 			&p.ID, &p.SKU, &p.Barcode, &p.Name,
 			&p.Brand, &p.Version, &p.Flavor, &p.Category,
 			&p.CostPrice, &p.SellingPrice,
-			&p.MinimumStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
+			&p.MinimumStock, &p.IsPartnerStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
 			&p.CurrentStock,
 		); err != nil {
 			return nil, fmt.Errorf("scan product: %w", err)
@@ -140,7 +126,6 @@ func ListAll(ctx context.Context) ([]ProductWithStock, error) {
 	return out, rows.Err()
 }
 
-// Get returns one product with stock.
 func Get(ctx context.Context, id int64) (*ProductWithStock, error) {
 	const q = `
 		SELECT
@@ -148,7 +133,7 @@ func Get(ctx context.Context, id int64) (*ProductWithStock, error) {
 			COALESCE(p.brand,''), COALESCE(p.version,''), COALESCE(p.flavor,''),
 			COALESCE(p.category,''),
 			p.cost_price::float8, p.selling_price::float8,
-			p.minimum_stock, p.active, p.created_at, p.updated_at,
+			p.minimum_stock, p.is_partner_stock, p.active, p.created_at, p.updated_at,
 			COALESCE(i.current_stock, 0)
 		FROM products p
 		LEFT JOIN inventory i ON i.product_id = p.id
@@ -159,7 +144,7 @@ func Get(ctx context.Context, id int64) (*ProductWithStock, error) {
 		&p.ID, &p.SKU, &p.Barcode, &p.Name,
 		&p.Brand, &p.Version, &p.Flavor, &p.Category,
 		&p.CostPrice, &p.SellingPrice,
-		&p.MinimumStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
+		&p.MinimumStock, &p.IsPartnerStock, &p.Active, &p.CreatedAt, &p.UpdatedAt,
 		&p.CurrentStock,
 	)
 	if err != nil {
@@ -171,20 +156,19 @@ func Get(ctx context.Context, id int64) (*ProductWithStock, error) {
 	return &p, nil
 }
 
-// Create inserts a product. Returns the new ID.
 func Create(ctx context.Context, p *Product) (int64, error) {
 	const q = `
 		INSERT INTO products
 			(sku, barcode, name, brand, version, flavor, category,
-			 cost_price, selling_price, minimum_stock, active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE)
+			 cost_price, selling_price, minimum_stock, is_partner_stock, active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE)
 		RETURNING id
 	`
 	var id int64
 	err := database.Pool.QueryRow(ctx, q,
 		p.SKU, nullIfEmpty(p.Barcode), p.Name,
 		nullIfEmpty(p.Brand), nullIfEmpty(p.Version), nullIfEmpty(p.Flavor), nullIfEmpty(p.Category),
-		p.CostPrice, p.SellingPrice, p.MinimumStock,
+		p.CostPrice, p.SellingPrice, p.MinimumStock, p.IsPartnerStock,
 	).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("create product: %w", err)
@@ -192,19 +176,18 @@ func Create(ctx context.Context, p *Product) (int64, error) {
 	return id, nil
 }
 
-// Update updates a product by ID.
 func Update(ctx context.Context, p *Product) error {
 	const q = `
 		UPDATE products SET
 			sku = $1, barcode = $2, name = $3, brand = $4, version = $5,
 			flavor = $6, category = $7, cost_price = $8, selling_price = $9,
-			minimum_stock = $10, updated_at = NOW()
-		WHERE id = $11 AND active = TRUE
+			minimum_stock = $10, is_partner_stock = $11, updated_at = NOW()
+		WHERE id = $12 AND active = TRUE
 	`
 	cmd, err := database.Pool.Exec(ctx, q,
 		p.SKU, nullIfEmpty(p.Barcode), p.Name,
 		nullIfEmpty(p.Brand), nullIfEmpty(p.Version), nullIfEmpty(p.Flavor), nullIfEmpty(p.Category),
-		p.CostPrice, p.SellingPrice, p.MinimumStock,
+		p.CostPrice, p.SellingPrice, p.MinimumStock, p.IsPartnerStock,
 		p.ID,
 	)
 	if err != nil {
@@ -216,7 +199,6 @@ func Update(ctx context.Context, p *Product) error {
 	return nil
 }
 
-// SoftDelete marks the product as inactive.
 func SoftDelete(ctx context.Context, id int64) error {
 	cmd, err := database.Pool.Exec(ctx, `UPDATE products SET active = FALSE, updated_at = NOW() WHERE id = $1`, id)
 	if err != nil {

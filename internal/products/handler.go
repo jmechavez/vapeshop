@@ -11,7 +11,6 @@ import (
 const defaultPerPage = 25
 
 type Handler struct {
-	// All render functions are set by main.go.
 	RenderList      func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, q string, page Page)
 	RenderSearch    func(w http.ResponseWriter, r *http.Request, list []ProductWithStock, q string, page Page)
 	RenderNewModal  func(w http.ResponseWriter, r *http.Request, p Product, errMsg string)
@@ -178,17 +177,18 @@ func parseForm(r *http.Request) (*Product, string) {
 	_ = r.ParseForm()
 
 	p := &Product{
-		SKU:          strings.TrimSpace(r.FormValue("sku")),
-		Barcode:      strings.TrimSpace(r.FormValue("barcode")),
-		Name:         strings.TrimSpace(r.FormValue("name")),
-		Brand:        strings.TrimSpace(r.FormValue("brand")),
-		Version:      strings.TrimSpace(r.FormValue("version")),
-		Flavor:       strings.TrimSpace(r.FormValue("flavor")),
-		Category:     strings.TrimSpace(r.FormValue("category")),
-		CostPrice:    parseFloat(r.FormValue("cost_price")),
-		SellingPrice: parseFloat(r.FormValue("selling_price")),
-		MinimumStock: parseInt(r.FormValue("minimum_stock")),
-		Active:       true,
+		SKU:            strings.TrimSpace(r.FormValue("sku")),
+		Barcode:        strings.TrimSpace(r.FormValue("barcode")),
+		Name:           strings.TrimSpace(r.FormValue("name")),
+		Brand:          strings.TrimSpace(r.FormValue("brand")),
+		Version:        strings.TrimSpace(r.FormValue("version")),
+		Flavor:         strings.TrimSpace(r.FormValue("flavor")),
+		Category:       strings.TrimSpace(r.FormValue("category")),
+		CostPrice:      parseFloat(r.FormValue("cost_price")),
+		SellingPrice:   parseFloat(r.FormValue("selling_price")),
+		MinimumStock:   parseInt(r.FormValue("minimum_stock")),
+		IsPartnerStock: r.FormValue("is_partner_stock") == "true",
+		Active:         true,
 	}
 
 	if p.SKU == "" {

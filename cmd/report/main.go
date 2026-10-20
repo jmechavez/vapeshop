@@ -76,7 +76,20 @@ func main() {
 		WHERE status = 'completed' AND sale_date >= $1 AND sale_date < $2
 	`, startOfMonth, endOfMonth).Scan(&monthSalesCount)
 
-	// --- 3. Build the Message ---
+	// --- 3. Fetch Partner Stock Sales (Today) ---
+	var partnerTotal float64
+	var partnerCount int
+	_ = pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(si.subtotal), 0), COUNT(DISTINCT s.id)
+		FROM sale_items si
+		JOIN sales s ON s.id = si.sale_id
+		JOIN products p ON p.id = si.product_id
+		WHERE s.status = 'completed'
+		AND s.sale_date >= $1 AND s.sale_date < $2
+		AND p.is_partner_stock = TRUE
+	`, startOfDay, endOfDay).Scan(&partnerTotal, &partnerCount)
+
+	// --- 4. Build the Message ---
 	var sb strings.Builder
 	if isMorning {
 		sb.WriteString(fmt.Sprintf("🌅 *Morning Reminder (%s)*\n\n", reportDate.Format("Jan 02, 2006")))
@@ -93,6 +106,14 @@ func main() {
 	sb.WriteString(fmt.Sprintf("• Bank Transfer: ₱%.2f\n", todayPayments.BankTransfer))
 	sb.WriteString(fmt.Sprintf("*TOTAL:* ₱%.2f\n\n", todayPayments.Total()))
 
+	// Partner Stock (only shows if there are sales)
+	if partnerTotal > 0 {
+		sb.WriteString("🤝 *PARTNER STOCK SALES (Today)*\n")
+		sb.WriteString(fmt.Sprintf("• Items Sold: %d\n", partnerCount))
+		sb.WriteString(fmt.Sprintf("• Total: ₱%.2f\n", partnerTotal))
+		sb.WriteString("*This amount belongs to the consignor.*\n\n")
+	}
+
 	// This Month
 	sb.WriteString("📊 *THIS MONTH'S COLLECTIONS*\n")
 	sb.WriteString(fmt.Sprintf("• Sales Count: %d\n", monthSalesCount))
@@ -101,26 +122,6 @@ func main() {
 	sb.WriteString(fmt.Sprintf("• Maribank: ₱%.2f\n", monthPayments.Maribank))
 	sb.WriteString(fmt.Sprintf("• Bank Transfer: ₱%.2f\n", monthPayments.BankTransfer))
 	sb.WriteString(fmt.Sprintf("*TOTAL:* ₱%.2f\n\n", monthPayments.Total()))
-
-	// --- 4. Fetch Partner Stock Sales (Today) ---
-	var partnerTotal float64
-	var partnerCount int
-	_ = pool.QueryRow(ctx, `
-		SELECT COALESCE(SUM(si.subtotal), 0), COUNT(DISTINCT s.id)
-		FROM sale_items si
-		JOIN sales s ON s.id = si.sale_id
-		JOIN products p ON p.id = si.product_id
-		WHERE s.status = 'completed'
-		AND s.sale_date >= $1 AND s.sale_date < $2
-		AND p.is_partner_stock = TRUE
-	`, startOfDay, endOfDay).Scan(&partnerTotal, &partnerCount)
-
-	if partnerTotal > 0 {
-		sb.WriteString("\n🤝 *PARTNER STOCK SALES (Today)*\n")
-		sb.WriteString(fmt.Sprintf("• Items Sold: %d\n", partnerCount))
-		sb.WriteString(fmt.Sprintf("• Total: ₱%.2f\n", partnerTotal))
-		sb.WriteString("*This amount belongs to the consignor.*\n")
-	}
 
 	// 5. Send to Telegram
 	sendTelegramMessage(botToken, chatID, sb.String())

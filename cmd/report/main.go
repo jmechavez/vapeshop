@@ -98,7 +98,7 @@ func main() {
 	}
 
 	// Today
-	sb.WriteString("📅 *MGA KOLEKSYON KARON*\n")
+	sb.WriteString("📅 *MGA HALIN KARON*\n")
 	sb.WriteString(fmt.Sprintf("• Sales Count: %d\n", todaySalesCount))
 	sb.WriteString(fmt.Sprintf("• Cash: ₱%.2f\n", todayPayments.Cash))
 	sb.WriteString(fmt.Sprintf("• GCash: ₱%.2f\n", todayPayments.GCash))
@@ -108,14 +108,14 @@ func main() {
 
 	// Partner Stock (only shows if there are sales)
 	if partnerTotal > 0 {
-		sb.WriteString("🤝 *MGA HALIN SA STOCK NI JOAN(ATE) (Karon)*\n")
+		sb.WriteString("🤝 *MGA HALIN SA STOCK NI JOAN(ATE) KARON*\n")
 		sb.WriteString(fmt.Sprintf("• Items Sold: %d\n", partnerCount))
 		sb.WriteString(fmt.Sprintf("• Total: ₱%.2f\n", partnerTotal))
 		sb.WriteString("*This amount belongs to JOAN(ATE).*\n\n")
 	}
 
 	// This Month
-	sb.WriteString("📊 *MGA KOLEKSYON KARONG BULANA*\n")
+	sb.WriteString("📊 *MGA HALIN KARONG BULANA*\n")
 	sb.WriteString(fmt.Sprintf("• Sales Count: %d\n", monthSalesCount))
 	sb.WriteString(fmt.Sprintf("• Cash: ₱%.2f\n", monthPayments.Cash))
 	sb.WriteString(fmt.Sprintf("• GCash: ₱%.2f\n", monthPayments.GCash))

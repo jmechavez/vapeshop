@@ -1,4 +1,3 @@
-// views/partials/inventory.templ
 package partials
 
 import (
@@ -231,30 +230,25 @@ templ InventoryRow(row inventory.InventoryRow) {
 }
 
 templ InventoryCardMobile(row inventory.InventoryRow) {
-	<div id={ "inventory-card-" + fmt.Sprint(row.ProductID) } class="px-4 py-3">
-		<div class="flex items-start justify-between gap-2">
-			<div class="min-w-0 flex-1">
-				<div class="font-medium text-white truncate">{ row.Name }</div>
-				<div class="text-xs text-zinc-500 font-mono mt-0.5">{ row.SKU }</div>
-				if row.Brand != "" || row.Category != "" {
-					<div class="text-xs text-zinc-400 mt-1">
-						{ row.Brand }
-						if row.Brand != "" && row.Category != "" {
-							<span class="text-zinc-600"> · </span>
-						}
-						{ row.Category }
-					</div>
-				}
-			</div>
-			<div class="text-right shrink-0">
-				<div class="font-display text-lg text-white tabular-nums">{ fmt.Sprint(row.CurrentStock) }</div>
-				<div class="text-[10px] uppercase tracking-wide text-zinc-500">
-					min { fmt.Sprint(row.MinimumStock) }
-				</div>
-				<div class="mt-1">@stockStatus(row.IsLowStock)</div>
-			</div>
+	<div id={ "inventory-card-" + fmt.Sprint(row.ProductID) } class="px-4 py-3 border-b border-zinc-800 last:border-0">
+		<!-- Top Row: Name and SKU -->
+		<div class="mb-2">
+			<div class="font-medium text-white text-sm break-words leading-tight">{ row.Name }</div>
+			<div class="text-xs text-zinc-500 font-mono mt-1">{ row.SKU }</div>
 		</div>
-		<div class="mt-3 flex items-center gap-2">
+
+		<!-- Middle Row: Stock and Status -->
+		<div class="flex items-center justify-between gap-2 mb-3">
+			<div class="flex items-center gap-2">
+				<span class="text-xs text-zinc-400">Stock:</span>
+				<span class="text-sm font-medium text-zinc-200">{ fmt.Sprint(row.CurrentStock) }</span>
+				<span class="text-xs text-zinc-500">(Min: { fmt.Sprint(row.MinimumStock) })</span>
+			</div>
+			@stockStatus(row.IsLowStock)
+		</div>
+
+		<!-- Bottom Row: Buttons -->
+		<div class="flex items-center gap-2">
 			<button
 				type="button"
 				hx-get={ "/inventory/receive/" + fmt.Sprint(row.ProductID) }

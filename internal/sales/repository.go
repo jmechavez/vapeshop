@@ -376,20 +376,34 @@ func UpdateSplitPayments(ctx context.Context, saleID int64, payments []SplitPaym
 	return tx.Commit(ctx)
 }
 
-func Complete(ctx context.Context, saleID, userID int64) error {
+// COMPLETE with backdate feature
+func Complete(ctx context.Context, saleID, userID int64, saleDate string) error {
 	tx, err := database.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, `
+	// If saleDate is provided, use it. Otherwise, keep the current sale_date (NOW()).
+	dateClause := ""
+	var args []any
+	args = append(args, saleID)
+
+	if saleDate != "" {
+		dateClause = ", sale_date = $2::date + (NOW() - CURRENT_DATE)"
+		args = append(args, saleDate)
+	}
+
+	query := fmt.Sprintf(`
 		UPDATE sales s
 		SET subtotal = (SELECT COALESCE(SUM(subtotal), 0) FROM sale_items WHERE sale_id = s.id),
 		    total = (SELECT COALESCE(SUM(subtotal), 0) FROM sale_items WHERE sale_id = s.id) - s.discount,
 		    status = 'completed'
+		    %s
 		WHERE id = $1 AND status = 'pending'
-	`, saleID)
+	`, dateClause)
+
+	_, err = tx.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}

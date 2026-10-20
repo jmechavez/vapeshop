@@ -207,6 +207,13 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 					<div class="font-display text-lg text-lime-400 tabular-nums truncate">₱{fmt.Sprintf("%.2f", sale.Total)}</div>
 				</div>
 				<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="m-0">
+					<input type="hidden" name="discount" value={fmt.Sprintf("%.2f", sale.Discount)} />
+					<input type="hidden" name="amount_cash" value={func() string { for _, p := range sale.Payments { if p.Method == "Cash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="amount_gcash" value={func() string { for _, p := range sale.Payments { if p.Method == "GCash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="amount_maribank" value={func() string { for _, p := range sale.Payments { if p.Method == "Maribank" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="amount_bank" value={func() string { for _, p := range sale.Payments { if p.Method == "Bank Transfer" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="sale_date" value={sale.SaleDate.Format("2006-01-02")} />
+					
 					<button type="submit" class={ "min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) } disabled?={ len(sale.Items) == 0 }>
 						Complete Sale
 					</button>

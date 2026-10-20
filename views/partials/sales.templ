@@ -194,7 +194,7 @@ templ SaleCart(sale sales.Sale) {
 				/>
 			</div>
 
-			<!-- QUICK DISCOUNT BUTTONS (LARGER) -->
+			<!-- QUICK DISCOUNT BUTTONS -->
 			<div class="flex gap-2">
 				<button type="button" 
 					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
@@ -283,7 +283,6 @@ templ SaleCart(sale sales.Sale) {
 					/>
 				</div>
 				
-				<!-- PAY FULL IN CASH BUTTON (LARGER) -->
 				<button type="button" 
 					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
 					hx-vals={ `{"amount_cash": "` + fmt.Sprintf("%.2f", sale.Total) + `", "amount_gcash": "0", "amount_maribank": "0", "amount_bank": "0"}` }
@@ -293,34 +292,29 @@ templ SaleCart(sale sales.Sale) {
 				</button>
 			</div>
 
-			<div class="hidden sm:flex flex-col sm:flex-row gap-2 pt-2">
-				<button
-					type="button"
-					class={
-						"min-h-[44px] flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition",
-						templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0),
-					}
-					if len(sale.Items) == 0 {
-						disabled
-					}
-					data-confirm="yes"
-					data-title="Complete Sale"
-					data-message="Complete this sale? Stock will be deducted."
-					data-confirm-text="Complete"
-					data-destructive="false"
-					data-method="POST"
-					data-url={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete"}
-					data-target="body"
-				>
-					Complete sale
-				</button>
-				<a
-					href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10)) }
-					class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition"
-				>
-					View detail
-				</a>
-			</div>
+			<!-- FORM WITH DATE INSIDE -->
+			<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="hidden sm:flex flex-col pt-3 border-t border-zinc-800 m-0">
+				
+				<!-- SALE DATE (For backdating) -->
+				<div class="flex justify-between items-center text-sm gap-3 mb-3">
+					<span class="text-zinc-400">Sale Date</span>
+					<input type="date" name="sale_date" value={sale.SaleDate.Format("2006-01-02")} 
+						class="text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400" />
+				</div>
+
+				<div class="flex flex-col sm:flex-row gap-2">
+					<input type="hidden" name="discount" value={fmt.Sprintf("%.2f", sale.Discount)} />
+					<input type="hidden" name="amount_cash" value={func() string { for _, p := range sale.Payments { if p.Method == "Cash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="amount_gcash" value={func() string { for _, p := range sale.Payments { if p.Method == "GCash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="amount_maribank" value={func() string { for _, p := range sale.Payments { if p.Method == "Maribank" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					<input type="hidden" name="amount_bank" value={func() string { for _, p := range sale.Payments { if p.Method == "Bank Transfer" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
+					
+					<button type="submit" class={ "min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) } disabled?={ len(sale.Items) == 0 }>
+						Complete sale
+					</button>
+					<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">View detail</a>
+				</div>
+			</form>
 
 			<p class="text-xs text-zinc-500 pt-1">
 				The sale stays <span class="text-zinc-300 font-medium">pending</span> until you complete it. Refreshing this page keeps the cart.

@@ -95,4 +95,8 @@ type Dashboard struct {
 	TodayPayments   PaymentTotals
 	LowStockCount   int
 	RecentSales     []RecentSale
+
+	TodayPartnerStockTotal float64
+	TodayPartnerStockCount int
+	TodayVoidsCount        int
 }

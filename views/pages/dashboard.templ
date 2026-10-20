@@ -35,10 +35,17 @@ templ DashboardPage(sess *auth.Session, dash reports.Dashboard) {
 				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">Dashboard</h1>
 				<p class="text-sm text-zinc-400 mt-2">Today's activity at a glance.</p>
 			</div>
-			<a href="/sales/new" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)] self-start sm:self-auto">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="12" y1="5" x2="12" y2="19"></line> <line x1="5" y1="12" x2="19" y2="12"></line></svg>
-				New Sale
-			</a>
+			<div class="flex items-center gap-2">
+				<!-- NEW END OF DAY BUTTON -->
+				<button type="button" hx-get="/dashboard/z-report" hx-target="#modal" hx-swap="innerHTML"
+					class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">
+					📋 End of Day
+				</button>
+				<a href="/sales/new" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)] self-start sm:self-auto">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="12" y1="5" x2="12" y2="19"></line> <line x1="5" y1="12" x2="19" y2="12"></line></svg>
+					New Sale
+				</a>
+			</div>
 		</div>
 
 		<!-- Top summary cards -->
@@ -187,4 +194,78 @@ templ statusBadge(status string) {
 	} else {
 		<span class="px-2 py-0.5 rounded-sm text-[10px] uppercase tracking-wide bg-zinc-800 text-zinc-300 border border-zinc-700">{status}</span>
 	}
+}
+
+templ ZReportModal(dash reports.Dashboard) {
+	<div id="z-report-modal" class="modal-backdrop" data-modal>
+		<div class="modal-panel">
+			<div class="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+				<h2 class="font-display italic uppercase tracking-wider text-lg">End of Day Summary</h2>
+				<button type="button" onclick="closeModal('z-report-modal')" class="h-9 w-9 inline-flex items-center justify-center rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white active:scale-95 transition" aria-label="Close">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"></line> <line x1="6" y1="6" x2="18" y2="18"></line></svg>
+				</button>
+			</div>
+			<div class="p-5 space-y-4">
+				<div class="flex justify-between items-center pb-2 border-b border-zinc-800">
+					<span class="text-zinc-400">Total Sales</span>
+					<span class="font-display text-xl text-lime-400">{fmt.Sprintf("%d", dash.TodaySalesCount)}</span>
+				</div>
+
+				<div class="space-y-1">
+					<div class="flex justify-between text-sm text-zinc-300">
+						<span>Cash</span>
+						<span class="tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPayments.Cash)}</span>
+					</div>
+					<div class="flex justify-between text-sm text-zinc-300">
+						<span>GCash</span>
+						<span class="tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPayments.GCash)}</span>
+					</div>
+					<div class="flex justify-between text-sm text-zinc-300">
+						<span>Maribank</span>
+						<span class="tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPayments.Maribank)}</span>
+					</div>
+					<div class="flex justify-between text-sm text-zinc-300">
+						<span>Bank Transfer</span>
+						<span class="tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPayments.BankTransfer)}</span>
+					</div>
+				</div>
+
+				<div class="flex justify-between items-center pt-2 border-t border-zinc-800">
+					<span class="font-display uppercase tracking-wide text-zinc-200">Total Collected</span>
+					<span class="font-display text-xl text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPayments.Total())}</span>
+				</div>
+
+				if dash.TodayPartnerStockTotal > 0 {
+					<div class="pt-4 mt-4 border-t border-zinc-800">
+						<div class="flex justify-between items-center text-sm text-orange-400 mb-2">
+							<span class="font-display uppercase tracking-wide">Partner Stock (To Pay)</span>
+						</div>
+						<div class="flex justify-between text-sm text-zinc-300">
+							<span>Items Sold</span>
+							<span>{fmt.Sprintf("%d", dash.TodayPartnerStockCount)}</span>
+						</div>
+						<div class="flex justify-between text-sm text-zinc-300 font-bold">
+							<span>Amount</span>
+							<span class="tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPartnerStockTotal)}</span>
+						</div>
+					</div>
+				}
+
+				<div class="pt-4 mt-4 border-t border-zinc-800">
+					<div class="flex justify-between text-sm text-red-500">
+						<span>Voided Sales</span>
+						<span>{fmt.Sprintf("%d", dash.TodayVoidsCount)}</span>
+					</div>
+				</div>
+				
+				<div class="pt-2">
+					<form method="POST" action="/dashboard/z-report" class="m-0">
+						<button type="submit" class="w-full min-h-[44px] rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">
+							Send to Telegram
+						</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
 }

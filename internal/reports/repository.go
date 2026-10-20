@@ -318,6 +318,8 @@ func LoadReport(ctx context.Context, r Range) (Report, error) {
 	}, nil
 }
 
+// ... (keep existing code)
+
 func LoadDashboard(ctx context.Context) (Dashboard, error) {
 	today := time.Now().Format("2006-01-02")
 	var d Dashboard
@@ -346,6 +348,33 @@ func LoadDashboard(ctx context.Context) (Dashboard, error) {
 		WHERE p.active = true
 		  AND COALESCE(i.current_stock, 0) <= p.minimum_stock
 	`).Scan(&d.LowStockCount)
+	if err != nil {
+		return Dashboard{}, err
+	}
+
+	// NEW: Calculate Partner Stock Sales (Today)
+	err = database.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(si.subtotal), 0), COUNT(DISTINCT s.id)
+		FROM sale_items si
+		JOIN sales s ON s.id = si.sale_id
+		JOIN products p ON p.id = si.product_id
+		WHERE s.status = 'completed'
+		AND s.sale_date >= $1::date
+		AND s.sale_date < ($1::date + INTERVAL '1 day')
+		AND p.is_partner_stock = TRUE
+	`, today).Scan(&d.TodayPartnerStockTotal, &d.TodayPartnerStockCount)
+	if err != nil {
+		return Dashboard{}, err
+	}
+
+	// NEW: Calculate Voids (Today)
+	err = database.Pool.QueryRow(ctx, `
+		SELECT COUNT(*)::int
+		FROM sales
+		WHERE status = 'void'
+		AND sale_date >= $1::date
+		AND sale_date < ($1::date + INTERVAL '1 day')
+	`, today).Scan(&d.TodayVoidsCount)
 	if err != nil {
 		return Dashboard{}, err
 	}

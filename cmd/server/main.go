@@ -179,6 +179,16 @@ func main() {
 		pr.Use(sessionStore.RequireLogin)
 
 		pr.Get("/dashboard", reportsHandler.Dashboard)
+		// NEW Z-REPORT ROUTES
+		pr.Get("/dashboard/z-report", func(w http.ResponseWriter, r *http.Request) {
+			dash, err := reports.LoadDashboard(r.Context())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			pages.ZReportModal(dash).Render(r.Context(), w)
+		})
+		pr.Post("/dashboard/z-report", reportsHandler.SendZReport)
 
 		pr.Route("/products", func(pr chi.Router) {
 			pr.Get("/", productsHandler.Index)

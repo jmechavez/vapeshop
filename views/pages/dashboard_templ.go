@@ -68,7 +68,7 @@ func DashboardPage(sess *auth.Session, dash reports.Dashboard) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6\"><div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none\">Dashboard</h1><p class=\"text-sm text-zinc-400 mt-2\">Today's activity at a glance.</p></div><div class=\"flex items-center gap-2\"><!-- NEW END OF DAY BUTTON --><button type=\"button\" hx-get=\"/dashboard/z-report\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition\">📋 End of Day</button> <a href=\"/sales/new\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)] self-start sm:self-auto\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-4 w-4\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line> <line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> New Sale</a></div></div><!-- Top summary cards --> <div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Header --> <div class=\"flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6\"><div><h1 class=\"font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none\">Dashboard</h1><p class=\"text-sm text-zinc-400 mt-2\">Today's activity at a glance.</p></div><div class=\"flex items-center gap-2\"><!-- END OF DAY BUTTON --><button type=\"button\" hx-get=\"/dashboard/z-report\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition\">📋 End of Day</button> <a href=\"/sales/new\" class=\"min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition sm:shadow-[0_0_15px_rgba(163,230,53,0.35)] self-start sm:self-auto\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-4 w-4\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line> <line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> New Sale</a></div></div><!-- Top summary cards --> <div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -368,7 +368,7 @@ func DashboardPage(sess *auth.Session, dash reports.Dashboard) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><!-- THIS IS THE MISSING DIV FOR THE MODAL --> <div id=\"modal\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><!-- THIS IS THE DIV FOR THE MODAL --> <div id=\"modal\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -729,7 +729,7 @@ func ZReportModal(dash reports.Dashboard) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</span></div><!-- ONLY SHOW PARTNER STOCK IF > 0 -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -741,7 +741,7 @@ func ZReportModal(dash reports.Dashboard) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", dash.TodayPartnerStockCount))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/dashboard.templ`, Line: 248, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/dashboard.templ`, Line: 249, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -754,7 +754,7 @@ func ZReportModal(dash reports.Dashboard) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", dash.TodayPartnerStockTotal))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/dashboard.templ`, Line: 252, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/dashboard.templ`, Line: 253, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -765,20 +765,30 @@ func ZReportModal(dash reports.Dashboard) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<div class=\"pt-4 mt-4 border-t border-zinc-800\"><div class=\"flex justify-between text-sm text-red-500\"><span>Voided Sales</span> <span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<!-- ONLY SHOW VOIDS IF > 0 -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var40 string
-		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", dash.TodayVoidsCount))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/dashboard.templ`, Line: 260, Col: 52}
+		if dash.TodayVoidsCount > 0 {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"pt-4 mt-4 border-t border-zinc-800\"><div class=\"flex justify-between text-sm text-red-500\"><span>Voided Sales</span> <span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var40 string
+			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", dash.TodayVoidsCount))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/dashboard.templ`, Line: 263, Col: 53}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</span></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</span></div></div><div class=\"pt-2\"><form method=\"POST\" action=\"/dashboard/z-report\" class=\"m-0\"><button type=\"submit\" class=\"w-full min-h-[44px] rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition\">Send to Telegram</button></form></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<div class=\"pt-2\"><form method=\"POST\" action=\"/dashboard/z-report\" class=\"m-0\"><button type=\"submit\" class=\"w-full min-h-[44px] rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition\">Send to Telegram</button></form></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

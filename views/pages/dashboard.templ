@@ -36,7 +36,7 @@ templ DashboardPage(sess *auth.Session, dash reports.Dashboard) {
 				<p class="text-sm text-zinc-400 mt-2">Today's activity at a glance.</p>
 			</div>
 			<div class="flex items-center gap-2">
-				<!-- NEW END OF DAY BUTTON -->
+				<!-- END OF DAY BUTTON -->
 				<button type="button" hx-get="/dashboard/z-report" hx-target="#modal" hx-swap="innerHTML"
 					class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">
 					📋 End of Day
@@ -145,7 +145,7 @@ templ DashboardPage(sess *auth.Session, dash reports.Dashboard) {
 			}
 		</div>
 
-		<!-- THIS IS THE MISSING DIV FOR THE MODAL -->
+		<!-- THIS IS THE DIV FOR THE MODAL -->
 		<div id="modal"></div>
 	}
 }
@@ -238,6 +238,7 @@ templ ZReportModal(dash reports.Dashboard) {
 					<span class="font-display text-xl text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", dash.TodayPayments.Total())}</span>
 				</div>
 
+				<!-- ONLY SHOW PARTNER STOCK IF > 0 -->
 				if dash.TodayPartnerStockTotal > 0 {
 					<div class="pt-4 mt-4 border-t border-zinc-800">
 						<div class="flex justify-between items-center text-sm text-orange-400 mb-2">
@@ -254,12 +255,15 @@ templ ZReportModal(dash reports.Dashboard) {
 					</div>
 				}
 
-				<div class="pt-4 mt-4 border-t border-zinc-800">
-					<div class="flex justify-between text-sm text-red-500">
-						<span>Voided Sales</span>
-						<span>{fmt.Sprintf("%d", dash.TodayVoidsCount)}</span>
+				<!-- ONLY SHOW VOIDS IF > 0 -->
+				if dash.TodayVoidsCount > 0 {
+					<div class="pt-4 mt-4 border-t border-zinc-800">
+						<div class="flex justify-between text-sm text-red-500">
+							<span>Voided Sales</span>
+							<span>{fmt.Sprintf("%d", dash.TodayVoidsCount)}</span>
+						</div>
 					</div>
-				</div>
+				}
 				
 				<div class="pt-2">
 					<form method="POST" action="/dashboard/z-report" class="m-0">

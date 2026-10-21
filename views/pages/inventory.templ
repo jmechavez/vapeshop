@@ -26,7 +26,49 @@ templ InventoryPage(sess *auth.Session, rows []inventory.InventoryRow, filter in
 			</a>
 		</div>
 
-		@partials.InventoryTable(rows, filter, page)
+		<!-- Search + low-stock filter (OUTSIDE the htmx target so typing doesn't lose focus) -->
+		<div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 bg-zinc-900 border border-zinc-800 rounded-md p-4">
+			<div class="flex-1 relative">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" style="width:1rem;height:1rem;">
+					<circle cx="11" cy="11" r="8"></circle>
+					<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+				</svg>
+				<input
+					type="search"
+					name="q"
+					value={ filter.Query }
+					placeholder="Search name, SKU, brand..."
+					class="w-full text-base pl-10 pr-3 py-3 sm:py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
+					hx-get="/inventory/search"
+					hx-target="#inventory-results"
+					hx-swap="innerHTML"
+					hx-trigger="keyup changed delay:300ms, search"
+					hx-include="closest .bg-zinc-900"
+					hx-push-url="true"
+				/>
+			</div>
+			<label class="inline-flex items-center gap-2 min-h-[44px] px-3 rounded-sm border border-zinc-800 hover:border-zinc-700 cursor-pointer transition shrink-0">
+				<input
+					type="checkbox"
+					name="low"
+					value="1"
+					checked?={ filter.LowOnly }
+					class="h-4 w-4 rounded-sm border-zinc-700 bg-zinc-950 text-lime-400 focus:ring-2 focus:ring-lime-400/30"
+					hx-get="/inventory/search"
+					hx-target="#inventory-results"
+					hx-swap="innerHTML"
+					hx-trigger="change"
+					hx-include="closest .bg-zinc-900"
+					hx-push-url="true"
+				/>
+				<span class="text-sm text-zinc-300 whitespace-nowrap">Low stock</span>
+			</label>
+		</div>
+
+		<!-- The Htmx Target -->
+		<div id="inventory-results">
+			@partials.InventoryTableResults(rows, filter, page)
+		</div>
 
 		<!-- Modal host. MUST be present, MUST have this exact id. -->
 		<div id="modal-root"></div>

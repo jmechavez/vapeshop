@@ -72,7 +72,7 @@ func main() {
 
 	invHandler.RenderList = func(w http.ResponseWriter, r *http.Request, rows []inventory.InventoryRow, filter inventory.ListFilter, page inventory.Page) {
 		if r.Header.Get("HX-Request") == "true" {
-			partials.InventoryTable(rows, filter, page).Render(r.Context(), w)
+			partials.InventoryTableResults(rows, filter, page).Render(r.Context(), w)
 			return
 		}
 		sess := auth.FromContext(r.Context())

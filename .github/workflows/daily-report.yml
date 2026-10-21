@@ -1,13 +1,14 @@
-
 name: Daily Telegram Report
 
 on:
   schedule:
     # 10:00 PM Philippine Time (14:00 UTC)
-    - cron: '0 14 * * *'
+    # Note: GitHub cron delays are common. If it's arriving too late, 
+    # you can shift this to 13:00 UTC (9:00 PM PH) to buffer the delay.
+    - cron: '0 13 * * *'
 
-    # 7:00 AM Philippine Time (23:00 UTC)
-    - cron: '0 23 * * *'
+    # 7:00 AM Philippine Time (23:00 UTC of the previous day)
+    - cron: '0 22 * * *'
 
   # Allow manual execution from the Actions tab
   workflow_dispatch:
@@ -48,4 +49,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # FORCE THE SCRIPT TO USE PHILIPPINE TIME
+          TZ: Asia/Manila
         run: go run ./cmd/report

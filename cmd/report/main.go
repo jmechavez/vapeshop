@@ -44,6 +44,7 @@ func main() {
 	now := time.Now().In(loc)
 
 	// Determine if we are reporting for Today (Evening) or Yesterday (Morning)
+	// We use 12:00 PM as the cutoff.
 	var reportDate time.Time
 	var isMorning bool
 	if now.Hour() < 12 {
@@ -65,7 +66,9 @@ func main() {
 	var todaySalesCount int
 	_ = pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM sales 
-		WHERE status = 'completed' AND sale_date >= $1 AND sale_date < $2
+		WHERE status = 'completed' 
+		  AND (sale_date AT TIME ZONE 'Asia/Manila') >= $1 
+		  AND (sale_date AT TIME ZONE 'Asia/Manila') < $2
 	`, startOfDay, endOfDay).Scan(&todaySalesCount)
 
 	// --- 2. Fetch Month's Stats ---
@@ -73,7 +76,9 @@ func main() {
 	var monthSalesCount int
 	_ = pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM sales 
-		WHERE status = 'completed' AND sale_date >= $1 AND sale_date < $2
+		WHERE status = 'completed' 
+		  AND (sale_date AT TIME ZONE 'Asia/Manila') >= $1 
+		  AND (sale_date AT TIME ZONE 'Asia/Manila') < $2
 	`, startOfMonth, endOfMonth).Scan(&monthSalesCount)
 
 	// --- 3. Fetch Partner Stock Sales (Today) ---
@@ -85,8 +90,9 @@ func main() {
 		JOIN sales s ON s.id = si.sale_id
 		JOIN products p ON p.id = si.product_id
 		WHERE s.status = 'completed'
-		AND s.sale_date >= $1 AND s.sale_date < $2
-		AND p.is_partner_stock = TRUE
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila') >= $1 
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila') < $2
+		  AND p.is_partner_stock = TRUE
 	`, startOfDay, endOfDay).Scan(&partnerTotal, &partnerCount)
 
 	// --- 4. Build the Message ---
@@ -134,7 +140,8 @@ func getPaymentStats(ctx context.Context, pool *pgxpool.Pool, start, end time.Ti
 		FROM sale_payments sp
 		JOIN sales s ON s.id = sp.sale_id
 		WHERE s.status = 'completed'
-		AND s.sale_date >= $1 AND s.sale_date < $2
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila') >= $1 
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila') < $2
 		GROUP BY sp.method
 	`, start, end)
 	if err != nil {

@@ -175,49 +175,26 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 			<a href="/sales" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto">← Back to sales</a>
 		</div>
 
-		<div class="pb-40 sm:pb-32">
-			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-				<div>
-					<div class="relative">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" style="width:1rem;height:1rem;"><circle cx="11" cy="11" r="8"></circle> <line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-						<input
-							type="text"
-							name="q"
-							placeholder="Search product by name or SKU…"
-							autocomplete="off"
-							class="w-full text-base pl-10 pr-3 py-3 sm:py-2 bg-zinc-900 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
-							hx-get={"/sales/search-products?sale=" + strconv.FormatInt(sale.ID, 10)}
-							hx-trigger="keyup changed delay:300ms, search"
-							hx-target="#suggestions"
-							hx-swap="innerHTML"
-						/>
-					</div>
-					<div id="suggestions" class="mt-2"></div>
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+			<div>
+				<div class="relative">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" style="width:1rem;height:1rem;"><circle cx="11" cy="11" r="8"></circle> <line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+					<input
+						type="text"
+						name="q"
+						placeholder="Search product by name or SKU…"
+						autocomplete="off"
+						class="w-full text-base pl-10 pr-3 py-3 sm:py-2 bg-zinc-900 border border-zinc-800 rounded-sm text-white placeholder-zinc-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition"
+						hx-get={"/sales/search-products?sale=" + strconv.FormatInt(sale.ID, 10)}
+						hx-trigger="keyup changed delay:300ms, search"
+						hx-target="#suggestions"
+						hx-swap="innerHTML"
+					/>
 				</div>
-				<div>
-					@partials.SaleCart(sale)
-				</div>
+				<div id="suggestions" class="mt-2"></div>
 			</div>
-		</div>
-
-		<div class="sm:hidden sticky-bottom-bar">
-			<div class="px-4 py-3 flex items-center gap-3">
-				<div class="flex-1 min-w-0">
-					<div class="text-[10px] uppercase tracking-wide text-zinc-500">Total</div>
-					<div class="font-display text-lg text-lime-400 tabular-nums truncate">₱{fmt.Sprintf("%.2f", sale.Total)}</div>
-				</div>
-				<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="m-0">
-					<input type="hidden" name="discount" value={fmt.Sprintf("%.2f", sale.Discount)} />
-					<input type="hidden" name="amount_cash" value={func() string { for _, p := range sale.Payments { if p.Method == "Cash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="amount_gcash" value={func() string { for _, p := range sale.Payments { if p.Method == "GCash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="amount_maribank" value={func() string { for _, p := range sale.Payments { if p.Method == "Maribank" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="amount_bank" value={func() string { for _, p := range sale.Payments { if p.Method == "Bank Transfer" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="sale_date" value={sale.SaleDate.Format("2006-01-02")} />
-					
-					<button type="submit" class={ "min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) } disabled?={ len(sale.Items) == 0 }>
-						Complete Sale
-					</button>
-				</form>
+			<div>
+				@partials.SaleCart(sale)
 			</div>
 		</div>
 	}

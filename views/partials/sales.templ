@@ -9,9 +9,7 @@ import (
 
 templ SaleSuggestions(saleID int64, products []sales.ProductSuggestion) {
 	if len(products) == 0 {
-		<div class="p-3 text-sm text-zinc-400 bg-zinc-900 border border-zinc-800 rounded-md">
-			No products found.
-		</div>
+		<div class="p-3 text-sm text-zinc-400 bg-zinc-900 border border-zinc-800 rounded-md">No products found.</div>
 	} else {
 		<ul class="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
 			for _, p := range products {
@@ -22,9 +20,7 @@ templ SaleSuggestions(saleID int64, products []sales.ProductSuggestion) {
 								<span class="font-mono text-xs text-zinc-500">{p.SKU}</span>
 								<span class="ml-2 line-through">{p.Name}</span>
 							</span>
-							<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 border border-red-500/30 whitespace-nowrap">
-								Out of stock
-							</span>
+							<span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 border border-red-500/30 whitespace-nowrap">Out of stock</span>
 						</div>
 					} else {
 						<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(saleID, 10) + "/items") }>
@@ -50,21 +46,17 @@ templ SaleSuggestions(saleID int64, products []sales.ProductSuggestion) {
 }
 
 templ SaleCart(sale sales.Sale) {
-	<div id="cart-panel" class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+	<div id="cart-panel" class="bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden lg:sticky lg:top-6">
 		<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between gap-2">
 			<div class="min-w-0">
 				<div class="font-display italic uppercase tracking-wider text-base text-white">Cart</div>
 				<div class="text-xs text-zinc-500 font-mono truncate">{sale.Reference}</div>
 			</div>
-			<span class="text-xs text-zinc-400 whitespace-nowrap">
-				{strconv.Itoa(sale.ItemCount)} item(s)
-			</span>
+			<span class="text-xs text-zinc-400 whitespace-nowrap">{strconv.Itoa(sale.ItemCount)} item(s)</span>
 		</div>
 
 		if len(sale.Items) == 0 {
-			<div class="px-6 py-10 text-center text-sm text-zinc-400">
-				Cart is empty. Search a product above to add it.
-			</div>
+			<div class="px-6 py-10 text-center text-sm text-zinc-400">Cart is empty. Search a product above to add it.</div>
 		} else {
 			<div class="hidden md:block overflow-x-auto">
 				<table class="min-w-full text-sm">
@@ -113,10 +105,7 @@ templ SaleCart(sale sales.Sale) {
 										class="h-8 w-8 inline-flex items-center justify-center rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition"
 										aria-label="Remove item"
 									>
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-											<line x1="18" y1="6" x2="6" y2="18"></line>
-											<line x1="6" y1="6" x2="18" y2="18"></line>
-										</svg>
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"></line> <line x1="6" y1="6" x2="18" y2="18"></line></svg>
 									</button>
 								</td>
 							</tr>
@@ -124,7 +113,6 @@ templ SaleCart(sale sales.Sale) {
 					</tbody>
 				</table>
 			</div>
-
 			<div class="md:hidden divide-y divide-zinc-800">
 				for _, it := range sale.Items {
 					<div class="px-4 py-3">
@@ -162,9 +150,7 @@ templ SaleCart(sale sales.Sale) {
 								data-url={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/items/" + strconv.FormatInt(it.ID, 10)}
 								data-target="#cart-panel"
 								class="min-h-[40px] ml-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition text-sm"
-							>
-								Remove
-							</button>
+							>Remove</button>
 						</div>
 					</div>
 				}
@@ -176,7 +162,6 @@ templ SaleCart(sale sales.Sale) {
 				<span class="text-zinc-400">Subtotal</span>
 				<span class="text-zinc-200 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Subtotal)}</span>
 			</div>
-
 			<div class="flex justify-between items-center text-sm gap-3">
 				<span class="text-zinc-400">Discount (₱)</span>
 				<input
@@ -196,30 +181,30 @@ templ SaleCart(sale sales.Sale) {
 
 			<!-- QUICK DISCOUNT BUTTONS -->
 			<div class="flex gap-2">
-				<button type="button" 
+				<button
+					type="button"
 					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
 					hx-vals='{"discount": "50"}'
-					hx-target="#cart-panel" 
+					hx-target="#cart-panel"
 					hx-swap="outerHTML"
-					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition flex items-center justify-center">
-					₱50
-				</button>
-				<button type="button" 
+					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition flex items-center justify-center"
+				>₱50</button>
+				<button
+					type="button"
 					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
 					hx-vals='{"discount": "100"}'
-					hx-target="#cart-panel" 
+					hx-target="#cart-panel"
 					hx-swap="outerHTML"
-					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition flex items-center justify-center">
-					₱100
-				</button>
-				<button type="button" 
+					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition flex items-center justify-center"
+				>₱100</button>
+				<button
+					type="button"
 					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/discount"}
-					hx-vals={ `{"discount": "` + fmt.Sprintf("%.2f", sale.Subtotal) + `"}` }
-					hx-target="#cart-panel" 
+					hx-vals={"{\"discount\": \"" + fmt.Sprintf("%.2f", sale.Subtotal) + "\"}"}
+					hx-target="#cart-panel"
 					hx-swap="outerHTML"
-					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition flex items-center justify-center">
-					Free
-				</button>
+					class="flex-1 min-h-[40px] py-2 text-sm font-medium rounded-sm border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition flex items-center justify-center"
+				>Free</button>
 			</div>
 
 			<div class="flex justify-between text-base border-t border-zinc-800 pt-3">
@@ -230,95 +215,167 @@ templ SaleCart(sale sales.Sale) {
 			<!-- TRUE SPLIT PAYMENT SECTION -->
 			<div class="space-y-2 border-t border-zinc-800 pt-3">
 				<div class="text-xs font-medium text-zinc-400">Payment Breakdown</div>
-				
 				<div class="flex items-center justify-between gap-2">
 					<label class="text-sm text-zinc-300">Cash</label>
-					<input type="number" name="amount_cash" step="0.01" min="0" placeholder="0.00" 
-						value={func() string { for _, p := range sale.Payments { if p.Method == "Cash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+					<input
+						type="number"
+						name="amount_cash"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						value={func() string {
+							for _, p := range sale.Payments {
+								if p.Method == "Cash" {
+									return fmt.Sprintf("%.2f", p.Amount)
+								}
+							}
+							return ""
+						}()}
 						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
 						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
 						hx-trigger="change"
 						hx-include="closest .space-y-2"
-						hx-target="#cart-panel" 
+						hx-target="#cart-panel"
 						hx-swap="outerHTML"
 					/>
 				</div>
-
 				<div class="flex items-center justify-between gap-2">
 					<label class="text-sm text-zinc-300">GCash</label>
-					<input type="number" name="amount_gcash" step="0.01" min="0" placeholder="0.00" 
-						value={func() string { for _, p := range sale.Payments { if p.Method == "GCash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+					<input
+						type="number"
+						name="amount_gcash"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						value={func() string {
+							for _, p := range sale.Payments {
+								if p.Method == "GCash" {
+									return fmt.Sprintf("%.2f", p.Amount)
+								}
+							}
+							return ""
+						}()}
 						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
 						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
 						hx-trigger="change"
 						hx-include="closest .space-y-2"
-						hx-target="#cart-panel" 
+						hx-target="#cart-panel"
 						hx-swap="outerHTML"
 					/>
 				</div>
-
 				<div class="flex items-center justify-between gap-2">
 					<label class="text-sm text-zinc-300">Maribank</label>
-					<input type="number" name="amount_maribank" step="0.01" min="0" placeholder="0.00" 
-						value={func() string { for _, p := range sale.Payments { if p.Method == "Maribank" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+					<input
+						type="number"
+						name="amount_maribank"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						value={func() string {
+							for _, p := range sale.Payments {
+								if p.Method == "Maribank" {
+									return fmt.Sprintf("%.2f", p.Amount)
+								}
+							}
+							return ""
+						}()}
 						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
 						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
 						hx-trigger="change"
 						hx-include="closest .space-y-2"
-						hx-target="#cart-panel" 
+						hx-target="#cart-panel"
 						hx-swap="outerHTML"
 					/>
 				</div>
-
 				<div class="flex items-center justify-between gap-2">
 					<label class="text-sm text-zinc-300">Bank Transfer</label>
-					<input type="number" name="amount_bank" step="0.01" min="0" placeholder="0.00" 
-						value={func() string { for _, p := range sale.Payments { if p.Method == "Bank Transfer" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()}
+					<input
+						type="number"
+						name="amount_bank"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						value={func() string {
+							for _, p := range sale.Payments {
+								if p.Method == "Bank Transfer" {
+									return fmt.Sprintf("%.2f", p.Amount)
+								}
+							}
+							return ""
+						}()}
 						class="w-24 px-2 py-1.5 bg-zinc-950 border border-zinc-800 rounded-sm text-sm text-white text-right focus:outline-none focus:border-lime-400"
 						hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
 						hx-trigger="change"
 						hx-include="closest .space-y-2"
-						hx-target="#cart-panel" 
+						hx-target="#cart-panel"
 						hx-swap="outerHTML"
 					/>
 				</div>
-				
-				<button type="button" 
+				<button
+					type="button"
 					hx-put={"/sales/" + strconv.FormatInt(sale.ID, 10) + "/split-payments"}
-					hx-vals={ `{"amount_cash": "` + fmt.Sprintf("%.2f", sale.Total) + `", "amount_gcash": "0", "amount_maribank": "0", "amount_bank": "0"}` }
-					hx-target="#cart-panel" hx-swap="outerHTML"
-					class="w-full min-h-[44px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition">
-					Pay Full in Cash
-				</button>
+					hx-vals={"{\"amount_cash\": \"" + fmt.Sprintf("%.2f", sale.Total) + "\", \"amount_gcash\": \"0\", \"amount_maribank\": \"0\", \"amount_bank\": \"0\"}"}
+					hx-target="#cart-panel"
+					hx-swap="outerHTML"
+					class="w-full min-h-[44px] py-2 text-sm font-medium rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 active:scale-95 transition"
+				>Pay Full in Cash</button>
 			</div>
 
-			<!-- FORM WITH DATE INSIDE -->
-			<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="hidden sm:flex flex-col pt-3 border-t border-zinc-800 m-0">
-				
+			<!-- COMPLETE FORM (now visible on mobile AND desktop) -->
+			<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="flex flex-col pt-3 border-t border-zinc-800 m-0">
 				<!-- SALE DATE (For backdating) -->
 				<div class="flex justify-between items-center text-sm gap-3 mb-3">
 					<span class="text-zinc-400">Sale Date</span>
-					<input type="date" name="sale_date" value={sale.SaleDate.Format("2006-01-02")} 
-						class="text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400" />
+					<input
+						type="date"
+						name="sale_date"
+						value={sale.SaleDate.Format("2006-01-02")}
+						class="text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400"
+					/>
 				</div>
-
 				<div class="flex flex-col sm:flex-row gap-2">
-					<input type="hidden" name="discount" value={fmt.Sprintf("%.2f", sale.Discount)} />
-					<input type="hidden" name="amount_cash" value={func() string { for _, p := range sale.Payments { if p.Method == "Cash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="amount_gcash" value={func() string { for _, p := range sale.Payments { if p.Method == "GCash" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="amount_maribank" value={func() string { for _, p := range sale.Payments { if p.Method == "Maribank" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					<input type="hidden" name="amount_bank" value={func() string { for _, p := range sale.Payments { if p.Method == "Bank Transfer" { return fmt.Sprintf("%.2f", p.Amount) } }; return "" }()} />
-					
-					<button type="submit" class={ "min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) } disabled?={ len(sale.Items) == 0 }>
-						Complete sale
-					</button>
+					<input type="hidden" name="discount" value={fmt.Sprintf("%.2f", sale.Discount)}/>
+					<input type="hidden" name="amount_cash" value={func() string {
+						for _, p := range sale.Payments {
+							if p.Method == "Cash" {
+								return fmt.Sprintf("%.2f", p.Amount)
+							}
+						}
+						return ""
+					}()}/>
+					<input type="hidden" name="amount_gcash" value={func() string {
+						for _, p := range sale.Payments {
+							if p.Method == "GCash" {
+								return fmt.Sprintf("%.2f", p.Amount)
+							}
+						}
+						return ""
+					}()}/>
+					<input type="hidden" name="amount_maribank" value={func() string {
+						for _, p := range sale.Payments {
+							if p.Method == "Maribank" {
+								return fmt.Sprintf("%.2f", p.Amount)
+							}
+						}
+						return ""
+					}()}/>
+					<input type="hidden" name="amount_bank" value={func() string {
+						for _, p := range sale.Payments {
+							if p.Method == "Bank Transfer" {
+								return fmt.Sprintf("%.2f", p.Amount)
+							}
+						}
+						return ""
+					}()}/>
+					<button
+						type="submit"
+						class={ "min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
+						disabled?={ len(sale.Items) == 0 }
+					>Complete sale</button>
 					<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">View detail</a>
 				</div>
 			</form>
-
-			<p class="text-xs text-zinc-500 pt-1">
-				The sale stays <span class="text-zinc-300 font-medium">pending</span> until you complete it. Refreshing this page keeps the cart.
-			</p>
+			<p class="text-xs text-zinc-500 pt-1">The sale stays <span class="text-zinc-300 font-medium">pending</span> until you complete it. Refreshing this page keeps the cart.</p>
 		</div>
 	</div>
 }

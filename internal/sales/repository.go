@@ -32,10 +32,10 @@ func List(ctx context.Context, f Filter, page, perPage int) ([]Sale, int, error)
 		add("s.status = $%d", f.Status)
 	}
 	if f.DateFrom != "" {
-		add("s.sale_date >= $%d::date", f.DateFrom)
+		add("(s.sale_date AT TIME ZONE 'Asia/Manila')::date >= $%d::date", f.DateFrom)
 	}
 	if f.DateTo != "" {
-		add("s.sale_date < ($%d::date + INTERVAL '1 day')", f.DateTo)
+		add("(s.sale_date AT TIME ZONE 'Asia/Manila')::date <= $%d::date", f.DateTo)
 	}
 	if f.Reference != "" {
 		n++
@@ -384,13 +384,18 @@ func Complete(ctx context.Context, saleID, userID int64, saleDate string) error 
 	}
 	defer tx.Rollback(ctx)
 
-	// If saleDate is provided, use it. Otherwise, keep the current sale_date (NOW()).
+	// If saleDate is provided, use it. Otherwise, keep the current sale_date.
+	//
+	// We want: sale_date = chosen_date at "now" (in Asia/Manila wall-clock time),
+	// stored as a proper timestamptz so the app displays the picked day.
 	dateClause := ""
 	var args []any
 	args = append(args, saleID)
 
 	if saleDate != "" {
-		dateClause = ", sale_date = $2::date + (NOW() - CURRENT_DATE)"
+		dateClause = `, sale_date = (
+			($2 || ' ' || to_char(NOW() AT TIME ZONE 'Asia/Manila', 'HH24:MI:SS'))::timestamp
+		) AT TIME ZONE 'Asia/Manila'`
 		args = append(args, saleDate)
 	}
 

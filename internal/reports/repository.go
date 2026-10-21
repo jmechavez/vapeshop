@@ -34,8 +34,8 @@ func GetSummary(ctx context.Context, r Range) (Summary, error) {
 			COALESCE(SUM((SELECT COALESCE(SUM(quantity), 0) FROM sale_items WHERE sale_id = s.id)), 0)::int
 		FROM sales s
 		WHERE s.status = 'completed'
-		  AND s.sale_date >= $1::date
-		  AND s.sale_date < ($2::date + INTERVAL '1 day')
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date >= $1::date
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date <= $2::date
 	`, r.From, r.To).Scan(&s.SalesCount, &s.ItemsSold)
 	if err != nil {
 		return Summary{}, err
@@ -52,8 +52,8 @@ func GetPaymentTotals(ctx context.Context, r Range) (PaymentTotals, error) {
 		FROM sale_payments sp
 		JOIN sales s ON s.id = sp.sale_id
 		WHERE s.status = 'completed'
-		  AND s.sale_date >= $1::date
-		  AND s.sale_date < ($2::date + INTERVAL '1 day')
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date >= $1::date
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date <= $2::date
 		GROUP BY sp.method
 	`, r.From, r.To)
 	if err != nil {
@@ -86,13 +86,13 @@ func GetDailyTotals(ctx context.Context, r Range) ([]DailyTotal, error) {
 
 	rows, err := database.Pool.Query(ctx, `
 		SELECT
-			date_trunc('day', s.sale_date)::date AS day,
+			date_trunc('day', s.sale_date AT TIME ZONE 'Asia/Manila')::date AS day,
 			COALESCE(SUM(s.total), 0)::float8     AS revenue,
 			COUNT(*)::int                         AS count
 		FROM sales s
 		WHERE s.status = 'completed'
-		  AND s.sale_date >= $1::date
-		  AND s.sale_date < ($2::date + INTERVAL '1 day')
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date >= $1::date
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date <= $2::date
 		GROUP BY day
 		ORDER BY day ASC
 	`, r.From, r.To)
@@ -128,8 +128,8 @@ func GetTopProducts(ctx context.Context, r Range, limit int) ([]TopProduct, erro
 		FROM sale_items si
 		JOIN sales s ON s.id = si.sale_id
 		WHERE s.status = 'completed'
-		  AND s.sale_date >= $1::date
-		  AND s.sale_date < ($2::date + INTERVAL '1 day')
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date >= $1::date
+		  AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date <= $2::date
 		GROUP BY si.product_id, si.sku, si.product_name
 		ORDER BY SUM(si.quantity) DESC, SUM(si.subtotal) DESC
 		LIMIT $3
@@ -318,8 +318,6 @@ func LoadReport(ctx context.Context, r Range) (Report, error) {
 	}, nil
 }
 
-// ... (keep existing code)
-
 func LoadDashboard(ctx context.Context) (Dashboard, error) {
 	today := time.Now().Format("2006-01-02")
 	var d Dashboard
@@ -328,8 +326,7 @@ func LoadDashboard(ctx context.Context) (Dashboard, error) {
 		SELECT COUNT(*)::int
 		FROM sales
 		WHERE status = 'completed'
-		  AND sale_date >= $1::date
-		  AND sale_date < ($1::date + INTERVAL '1 day')
+		  AND (sale_date AT TIME ZONE 'Asia/Manila')::date = $1::date
 	`, today).Scan(&d.TodaySalesCount)
 	if err != nil {
 		return Dashboard{}, err
@@ -359,8 +356,7 @@ func LoadDashboard(ctx context.Context) (Dashboard, error) {
 		JOIN sales s ON s.id = si.sale_id
 		JOIN products p ON p.id = si.product_id
 		WHERE s.status = 'completed'
-		AND s.sale_date >= $1::date
-		AND s.sale_date < ($1::date + INTERVAL '1 day')
+		AND (s.sale_date AT TIME ZONE 'Asia/Manila')::date = $1::date
 		AND p.is_partner_stock = TRUE
 	`, today).Scan(&d.TodayPartnerStockTotal, &d.TodayPartnerStockCount)
 	if err != nil {
@@ -372,8 +368,7 @@ func LoadDashboard(ctx context.Context) (Dashboard, error) {
 		SELECT COUNT(*)::int
 		FROM sales
 		WHERE status = 'void'
-		AND sale_date >= $1::date
-		AND sale_date < ($1::date + INTERVAL '1 day')
+		AND (sale_date AT TIME ZONE 'Asia/Manila')::date = $1::date
 	`, today).Scan(&d.TodayVoidsCount)
 	if err != nil {
 		return Dashboard{}, err

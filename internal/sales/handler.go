@@ -336,7 +336,7 @@ func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 	// Read the date
 	saleDate := strings.TrimSpace(r.FormValue("sale_date"))
 
-	// Read split payments from the form
+	// Read split payments from the form (LIVE inputs)
 	var payments []SplitPayment
 	if cash := r.FormValue("amount_cash"); cash != "" {
 		if amt, err := strconv.ParseFloat(cash, 64); err == nil && amt > 0 {
@@ -359,11 +359,10 @@ func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if len(payments) > 0 {
-		if err := UpdateSplitPayments(r.Context(), id, payments); err != nil {
-			h.handleRepoError(w, r, err)
-			return
-		}
+	// Always update (even if empty) to ensure the DB reflects the live inputs
+	if err := UpdateSplitPayments(r.Context(), id, payments); err != nil {
+		h.handleRepoError(w, r, err)
+		return
 	}
 
 	if err := Complete(r.Context(), id, sess.UserID, saleDate); err != nil {

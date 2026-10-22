@@ -364,13 +364,11 @@ func UpdateSplitPayments(ctx context.Context, saleID int64, payments []SplitPaym
 		}
 	}
 
-	if primaryMethod == "" {
-		primaryMethod = PaymentCash
-	}
-
-	_, err = tx.Exec(ctx, `UPDATE sales SET payment_method = $1 WHERE id = $2`, primaryMethod, saleID)
-	if err != nil {
-		return err
+	if primaryMethod != "" {
+		_, err = tx.Exec(ctx, `UPDATE sales SET payment_method = $1 WHERE id = $2`, primaryMethod, saleID)
+		if err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit(ctx)
@@ -385,9 +383,6 @@ func Complete(ctx context.Context, saleID, userID int64, saleDate string) error 
 	defer tx.Rollback(ctx)
 
 	// If saleDate is provided, use it. Otherwise, keep the current sale_date.
-	//
-	// We want: sale_date = chosen_date at "now" (in Asia/Manila wall-clock time),
-	// stored as a proper timestamptz so the app displays the picked day.
 	dateClause := ""
 	var args []any
 	args = append(args, saleID)

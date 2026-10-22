@@ -40,19 +40,27 @@ func main() {
 	}
 	defer pool.Close()
 
+	// Use Philippine Time
 	loc, _ := time.LoadLocation("Asia/Manila")
 	now := time.Now().In(loc)
 
-	// Determine if we are reporting for Today (Evening) or Yesterday (Morning)
-	// We use 12:00 PM as the cutoff.
-	var reportDate time.Time
-	var isMorning bool
-	if now.Hour() < 12 {
-		reportDate = now.AddDate(0, 0, -1)
+	// GitHub Actions cron is unreliable and often runs late.
+	// We run the action every hour, but ONLY execute if it is exactly 7 AM or 10 PM PH time.
+	isMorning := false
+
+	if now.Hour() == 7 {
 		isMorning = true
+	} else if now.Hour() != 22 { // 10 PM
+		// If it's not 7 AM AND not 10 PM, skip.
+		log.Printf("Skipping report. Current PH hour is %d (only runs at 7 AM or 10 PM).", now.Hour())
+		return
+	}
+
+	var reportDate time.Time
+	if isMorning {
+		reportDate = now.AddDate(0, 0, -1) // Morning reports for Yesterday
 	} else {
-		reportDate = now
-		isMorning = false
+		reportDate = now // Evening reports for Today
 	}
 
 	startOfDay := time.Date(reportDate.Year(), reportDate.Month(), reportDate.Day(), 0, 0, 0, 0, loc)

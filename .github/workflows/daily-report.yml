@@ -2,13 +2,8 @@ name: Daily Telegram Report
 
 on:
   schedule:
-    # 10:00 PM Philippine Time (14:00 UTC)
-    # Note: GitHub cron delays are common. If it's arriving too late, 
-    # you can shift this to 13:00 UTC (9:00 PM PH) to buffer the delay.
-    - cron: '0 13 * * *'
-
-    # 7:00 AM Philippine Time (23:00 UTC of the previous day)
-    - cron: '0 22 * * *'
+    # Run every hour on the hour. The Go script will decide if it's the right time to send.
+    - cron: '0 * * * *'
 
   # Allow manual execution from the Actions tab
   workflow_dispatch:

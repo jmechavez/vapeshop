@@ -91,7 +91,7 @@ func (h *Handler) SendZReport(w http.ResponseWriter, r *http.Request) {
 	msg += fmt.Sprintf("*TOTAL COLLECTED:* ₱%.2f\n\n", dash.TodayPayments.Total())
 
 	if dash.TodayPartnerStockTotal > 0 {
-		msg += fmt.Sprintf("🤝 *Partner Stock (To Pay):*\n")
+		msg += fmt.Sprintf("🤝 *JOAN(ATE) Stock (To Pay):*\n")
 		msg += fmt.Sprintf("• Items Sold: %d\n", dash.TodayPartnerStockCount)
 		msg += fmt.Sprintf("• Amount: ₱%.2f\n\n", dash.TodayPartnerStockTotal)
 	}

@@ -9,10 +9,11 @@ import (
 )
 
 func normalizeRange(r Range) Range {
-	today := time.Now()
+	loc, _ := time.LoadLocation("Asia/Manila")
+	today := time.Now().In(loc)
 
 	if r.From == "" {
-		r.From = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).
+		r.From = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, loc).
 			Format("2006-01-02")
 	}
 	if r.To == "" {
@@ -185,7 +186,6 @@ func GetLowStock(ctx context.Context, limit int) ([]LowStock, error) {
 	return out, rows.Err()
 }
 
-// GetRecentSales now loads the split payments
 func GetRecentSales(ctx context.Context, limit int) ([]RecentSale, error) {
 	if limit <= 0 {
 		limit = 10
@@ -319,7 +319,8 @@ func LoadReport(ctx context.Context, r Range) (Report, error) {
 }
 
 func LoadDashboard(ctx context.Context) (Dashboard, error) {
-	today := time.Now().Format("2006-01-02")
+	loc, _ := time.LoadLocation("Asia/Manila")
+	today := time.Now().In(loc).Format("2006-01-02")
 	var d Dashboard
 
 	err := database.Pool.QueryRow(ctx, `
@@ -349,7 +350,6 @@ func LoadDashboard(ctx context.Context) (Dashboard, error) {
 		return Dashboard{}, err
 	}
 
-	// NEW: Calculate Partner Stock Sales (Today)
 	err = database.Pool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(si.subtotal), 0), COUNT(DISTINCT s.id)
 		FROM sale_items si
@@ -363,7 +363,6 @@ func LoadDashboard(ctx context.Context) (Dashboard, error) {
 		return Dashboard{}, err
 	}
 
-	// NEW: Calculate Voids (Today)
 	err = database.Pool.QueryRow(ctx, `
 		SELECT COUNT(*)::int
 		FROM sales

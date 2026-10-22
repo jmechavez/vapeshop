@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"strconv"
+	"time" // <-- Added
 
 	"github.com/jmechavez/vapeshop/internal/auth"
 	"github.com/jmechavez/vapeshop/internal/sales"
@@ -86,7 +87,7 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 							for _, s := range list {
 								<tr class="border-t border-zinc-800 hover:bg-zinc-800/40 transition">
 									<td class="px-3 py-2"><a href={ templ.SafeURL("/sales/" + strconv.FormatInt(s.ID, 10)) } class="font-mono text-xs text-lime-400 hover:text-lime-300">{s.Reference}</a></td>
-									<td class="px-3 py-2 text-zinc-400 text-xs whitespace-nowrap">{s.SaleDate.Format("2006-01-02 15:04")}</td>
+									<td class="px-3 py-2 text-zinc-400 text-xs whitespace-nowrap">{formatPH(s.SaleDate)}</td>
 									<td class="px-3 py-2 text-zinc-300">{s.CashierName}</td>
 									<td class="px-3 py-2 text-right text-zinc-400 tabular-nums">{strconv.Itoa(s.ItemCount)}</td>
 									<td class="px-3 py-2 text-right text-lime-400 font-medium tabular-nums">₱{fmt.Sprintf("%.2f", s.Total)}</td>
@@ -107,7 +108,7 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 							<div class="mt-2 flex items-end justify-between gap-2">
 								<div class="text-xs text-zinc-400 space-y-0.5">
 									<div>{s.CashierName} · {s.PaymentMethod}</div>
-									<div>{s.SaleDate.Format("Jan 02, 3:04 PM")} · {strconv.Itoa(s.ItemCount)} item(s)</div>
+									<div>{formatPHShort(s.SaleDate)} · {strconv.Itoa(s.ItemCount)} item(s)</div>
 								</div>
 								<div class="text-lime-400 font-display text-lg tabular-nums">₱{fmt.Sprintf("%.2f", s.Total)}</div>
 							</div>
@@ -214,7 +215,7 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 		</div>
 
 		<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-			@infoCard("Date", sale.SaleDate.Format("2006-01-02 15:04"))
+			@infoCard("Date", formatPH(sale.SaleDate))
 			@infoCard("Cashier", sale.CashierName)
 			
 			<div class="bg-zinc-900 border border-zinc-800 rounded-md p-3">
@@ -249,7 +250,7 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 					<div><span class="text-red-400">Voided by:</span> <span class="text-red-200">{sale.VoidedByName}</span></div>
 				}
 				if sale.VoidedAt != nil {
-					<div><span class="text-red-400">Voided at:</span> <span class="text-red-200">{sale.VoidedAt.Format("2006-01-02 15:04")}</span></div>
+					<div><span class="text-red-400">Voided at:</span> <span class="text-red-200">{formatPH(*sale.VoidedAt)}</span></div>
 				}
 			</div>
 		}
@@ -365,4 +366,15 @@ templ infoCard(label, value string) {
 		<div class="text-[10px] uppercase tracking-wide text-zinc-500">{label}</div>
 		<div class="text-sm text-zinc-200 mt-1 truncate">{value}</div>
 	</div>
+}
+
+// --- ADDED TIMEZONE HELPERS ---
+func formatPH(t time.Time) string {
+	loc, _ := time.LoadLocation("Asia/Manila")
+	return t.In(loc).Format("2006-01-02 15:04")
+}
+
+func formatPHShort(t time.Time) string {
+	loc, _ := time.LoadLocation("Asia/Manila")
+	return t.In(loc).Format("Jan 02, 3:04 PM")
 }

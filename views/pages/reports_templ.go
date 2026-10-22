@@ -523,9 +523,9 @@ func ReportsContent(report reports.Report) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var26 string
-				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(s.SaleDate.Format("2006-01-02 15:04"))
+				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(formatPH(s.SaleDate))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/reports.templ`, Line: 250, Col: 110}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/reports.templ`, Line: 250, Col: 93}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 				if templ_7745c5c3_Err != nil {
@@ -663,9 +663,9 @@ func ReportsContent(report reports.Report) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var36 string
-				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(s.SaleDate.Format("Jan 02, 3:04 PM"))
+				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(formatPHShort(s.SaleDate))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/reports.templ`, Line: 270, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/reports.templ`, Line: 270, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 				if templ_7745c5c3_Err != nil {

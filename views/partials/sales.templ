@@ -213,6 +213,14 @@ templ SaleCart(sale sales.Sale) {
 				<span class="font-display text-xl text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Total)}</span>
 			</div>
 
+			<!-- CHANGE DISPLAY — shows when customer overpaid in cash -->
+			if cashTotal(sale) > sale.Total {
+				<div class="flex justify-between text-sm pt-1">
+					<span class="text-zinc-400">Change</span>
+					<span class="text-emerald-500 font-semibold tabular-nums">₱{fmt.Sprintf("%.2f", cashTotal(sale)-sale.Total)}</span>
+				</div>
+			}
+
 			<!-- TRUE SPLIT PAYMENT SECTION -->
 			<div class="space-y-2 border-t border-zinc-800 pt-3">
 				<div class="text-xs font-medium text-zinc-400">Payment Breakdown</div>
@@ -322,8 +330,9 @@ templ SaleCart(sale sales.Sale) {
 				>Pay Full in Cash</button>
 			</div>
 
-			<!-- COMPLETE FORM -->
+			<!-- COMPLETE FORM (with confirm) -->
 			<form 
+				id="complete-form"
 				hx-post={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete" } 
 				hx-include="closest #cart-panel" 
 				hx-target="body"
@@ -342,9 +351,12 @@ templ SaleCart(sale sales.Sale) {
 				</div>
 				<div class="flex flex-col sm:flex-row gap-2">
 					<button
-						type="submit"
+						type="button"
+						onclick="window.pendingCompleteForm = this.closest('form'); openConfirm({title: 'Complete Sale', message: 'Complete this sale? Stock will be deducted.', confirmText: 'Complete', destructive: false, onConfirm: () => { htmx.trigger(window.pendingCompleteForm, 'submit'); }})"
 						class={ "min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
-						disabled?={ len(sale.Items) == 0 }
+						if len(sale.Items) == 0 {
+							disabled
+						}
 					>Complete sale</button>
 					<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">View detail</a>
 				</div>
@@ -354,8 +366,19 @@ templ SaleCart(sale sales.Sale) {
 	</div>
 }
 
-// --- ADDED TIMEZONE HELPER ---
+// --- Time helpers ---
 func formatPHDate(t time.Time) string {
 	loc, _ := time.LoadLocation("Asia/Manila")
 	return t.In(loc).Format("2006-01-02")
+}
+
+// --- Cash total helper (for change display) ---
+func cashTotal(sale sales.Sale) float64 {
+	var sum float64
+	for _, p := range sale.Payments {
+		if p.Method == "Cash" {
+			sum += p.Amount
+		}
+	}
+	return sum
 }

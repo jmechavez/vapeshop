@@ -3,7 +3,7 @@ package pages
 import (
 	"fmt"
 	"strconv"
-	"time" // <-- Added
+	"time"
 
 	"github.com/jmechavez/vapeshop/internal/auth"
 	"github.com/jmechavez/vapeshop/internal/sales"
@@ -176,7 +176,7 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 			<a href="/sales" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition self-start sm:self-auto">← Back to sales</a>
 		</div>
 
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 pb-40 sm:pb-32">
 			<div>
 				<div class="relative">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" style="width:1rem;height:1rem;"><circle cx="11" cy="11" r="8"></circle> <line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -196,6 +196,25 @@ templ SalePOS(sess *auth.Session, sale sales.Sale) {
 			</div>
 			<div>
 				@partials.SaleCart(sale)
+			</div>
+		</div>
+
+		<div class="sm:hidden sticky-bottom-bar">
+			<div class="px-4 py-3 flex items-center gap-3">
+				<div class="flex-1 min-w-0">
+					<div class="text-[10px] uppercase tracking-wide text-zinc-500">Total</div>
+					<div class="font-display text-lg text-lime-400 tabular-nums truncate">₱{ fmt.Sprintf("%.2f", sale.Total) }</div>
+				</div>
+				<button
+					type="button"
+					onclick="window.pendingCompleteForm = document.querySelector('#cart-panel form'); openConfirm({title: 'Complete Sale', message: 'Complete this sale? Stock will be deducted.', confirmText: 'Complete', destructive: false, onConfirm: () => { htmx.trigger(window.pendingCompleteForm, 'submit'); }})"
+					class={ "min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
+					if len(sale.Items) == 0 {
+						disabled
+					}
+				>
+					Complete Sale
+				</button>
 			</div>
 		</div>
 	}
@@ -353,9 +372,19 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 		if sale.Status == sales.StatusPending {
 			<div class="mt-6 flex flex-col sm:flex-row gap-2">
 				<a href={ templ.SafeURL("/sales/new?sale=" + strconv.FormatInt(sale.ID, 10)) } class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">Continue editing</a>
-				<form method="POST" action={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete") } class="m-0">
-					<button type="submit" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">Complete sale</button>
-				</form>
+				if len(sale.Items) > 0 {
+					<form id="detail-complete-form" hx-post={ "/sales/" + strconv.FormatInt(sale.ID, 10) + "/complete" } hx-target="body" hx-swap="none" class="m-0">
+						<button
+							type="button"
+							onclick="window.pendingDetailForm = this.closest('form'); openConfirm({title: 'Complete Sale', message: 'Complete this sale? Stock will be deducted.', confirmText: 'Complete', destructive: false, onConfirm: () => { htmx.trigger(window.pendingDetailForm, 'submit'); }})"
+							class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition"
+						>Complete sale</button>
+					</form>
+				} else {
+					<span class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400/40 text-black/60 font-semibold uppercase tracking-wide text-sm cursor-not-allowed">
+						Complete sale
+					</span>
+				}
 			</div>
 		}
 	}

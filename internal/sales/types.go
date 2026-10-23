@@ -47,6 +47,7 @@ var (
 	ErrInsufficientStock = errors.New("insufficient stock for one or more items")
 	ErrEmptyCart         = errors.New("cannot complete an empty sale")
 	ErrVoidReasonMissing = errors.New("void reason is required")
+	ErrInvalidPaymentSum = errors.New("payment amount does not match sale total")
 )
 
 type SplitPayment struct {

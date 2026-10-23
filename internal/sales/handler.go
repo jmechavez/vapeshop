@@ -58,6 +58,8 @@ func (h *Handler) handleRepoError(w http.ResponseWriter, r *http.Request, err er
 		h.fail(w, r, http.StatusConflict, "add at least one item first")
 	case errors.Is(err, ErrVoidReasonMissing):
 		h.fail(w, r, http.StatusBadRequest, "void reason is required")
+	case errors.Is(err, ErrInvalidPaymentSum):
+		h.fail(w, r, http.StatusBadRequest, "payment amount does not match the sale total")
 	default:
 		h.fail(w, r, http.StatusInternalServerError, err.Error())
 	}
@@ -357,6 +359,13 @@ func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 		if amt, err := strconv.ParseFloat(bank, 64); err == nil && amt > 0 {
 			payments = append(payments, SplitPayment{Method: PaymentBankTransfer, Amount: amt})
 		}
+	}
+
+	// Guard: if no payment was entered at all, reject immediately.
+	// This prevents an empty ₱0.00 sale from being completed.
+	if len(payments) == 0 {
+		h.fail(w, r, http.StatusBadRequest, "enter a payment amount before completing the sale")
+		return
 	}
 
 	// Always update (even if empty) to ensure the DB reflects the live inputs

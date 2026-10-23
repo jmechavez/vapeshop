@@ -374,7 +374,9 @@ func UpdateSplitPayments(ctx context.Context, saleID int64, payments []SplitPaym
 	return tx.Commit(ctx)
 }
 
-// COMPLETE with backdate feature
+// COMPLETE with:
+//   - backdate support (saleDate)
+//   - split payment validation (cash can overpay; non-cash cannot)
 func Complete(ctx context.Context, saleID, userID int64, saleDate string) error {
 	tx, err := database.Pool.Begin(ctx)
 	if err != nil {
@@ -382,7 +384,48 @@ func Complete(ctx context.Context, saleID, userID int64, saleDate string) error 
 	}
 	defer tx.Rollback(ctx)
 
-	// If saleDate is provided, use it. Otherwise, keep the current sale_date.
+	// 1. Read current total.
+	var total float64
+	err = tx.QueryRow(ctx, `SELECT total::float8 FROM sales WHERE id = $1 AND status = 'pending'`, saleID).Scan(&total)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrInvalidStatus
+		}
+		return fmt.Errorf("read sale total: %w", err)
+	}
+
+	// 2. Read split payments, split by Cash vs non-Cash.
+	var cashPaid, nonCashPaid float64
+	payRows, err := tx.Query(ctx, `SELECT method, amount::float8 FROM sale_payments WHERE sale_id = $1`, saleID)
+	if err != nil {
+		return fmt.Errorf("read payments: %w", err)
+	}
+	for payRows.Next() {
+		var m string
+		var a float64
+		if err := payRows.Scan(&m, &a); err != nil {
+			payRows.Close()
+			return fmt.Errorf("scan payment: %w", err)
+		}
+		if m == "Cash" {
+			cashPaid += a
+		} else {
+			nonCashPaid += a
+		}
+	}
+	payRows.Close()
+
+	// 3. Validation rules:
+	//    - Non-cash cannot exceed the total (customer would lose money on e-wallet overpay).
+	//    - Cash + non-cash must be at least the total (no partial sale).
+	if nonCashPaid > total {
+		return ErrInvalidPaymentSum
+	}
+	if cashPaid+nonCashPaid < total {
+		return ErrInvalidPaymentSum
+	}
+
+	// 4. Update sale to completed (optional backdate).
 	dateClause := ""
 	var args []any
 	args = append(args, saleID)
@@ -417,6 +460,7 @@ func Complete(ctx context.Context, saleID, userID int64, saleDate string) error 
 		return ErrInvalidStatus
 	}
 
+	// 5. Deduct stock.
 	rows, err := tx.Query(ctx, `SELECT product_id, quantity FROM sale_items WHERE sale_id = $1`, saleID)
 	if err != nil {
 		return err

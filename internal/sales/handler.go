@@ -106,6 +106,9 @@ func (h *Handler) NewSale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-void old pending sales (older than 24h) so ghost carts don't haunt the POS.
+	_ = VoidAbandonedPending(r.Context(), sess.UserID)
+
 	if raw := r.URL.Query().Get("sale"); raw != "" {
 		if id, err := strconv.ParseInt(raw, 10, 64); err == nil {
 			if sale, err := GetByID(r.Context(), id); err == nil && sale.Status == StatusPending {

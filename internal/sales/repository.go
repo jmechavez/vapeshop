@@ -172,14 +172,15 @@ func CreatePending(ctx context.Context, userID int64, method string) (int64, err
 	var id int64
 	err := database.Pool.QueryRow(ctx, `
 		INSERT INTO sales (reference, user_id, payment_method, status)
-		VALUES ('PENDING', $1, $2, 'pending')
+		VALUES ('TMP-' || extract(epoch from now())::bigint || '-' || floor(random() * 1000000)::int, $1, $2, 'pending')
 		RETURNING id
 	`, userID, method).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("create pending sale: %w", err)
 	}
+
 	_, err = database.Pool.Exec(ctx, `
-		UPDATE sales SET reference = 'S-' || to_char(NOW(), 'YYYYMMDD') || '-' || id WHERE id = $1
+		UPDATE sales SET reference = 'S-' || to_char(NOW() AT TIME ZONE 'Asia/Manila', 'YYYYMMDD') || '-' || id WHERE id = $1
 	`, id)
 	if err != nil {
 		return 0, fmt.Errorf("update ref: %w", err)
@@ -372,6 +373,22 @@ func UpdateSplitPayments(ctx context.Context, saleID int64, payments []SplitPaym
 	}
 
 	return tx.Commit(ctx)
+}
+
+// VoidAbandonedPending voids any pending sale for this user that is older than 24 hours.
+// This prevents the POS from loading a ghost cart from yesterday.
+func VoidAbandonedPending(ctx context.Context, userID int64) error {
+	_, err := database.Pool.Exec(ctx, `
+		UPDATE sales
+		SET status = 'void',
+		    void_reason = 'Abandoned cart (auto-voided)',
+		    voided_by = $1,
+		    voided_at = NOW()
+		WHERE user_id = $1
+		  AND status = 'pending'
+		  AND created_at < NOW() - INTERVAL '24 hours'
+	`, userID)
+	return err
 }
 
 // COMPLETE with:

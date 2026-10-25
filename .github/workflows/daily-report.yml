@@ -1,9 +1,12 @@
+
 name: Daily Telegram Report
 
 on:
+  # 10 PM Philippine time = 2 PM UTC
+  # 7 AM Philippine time = 11 PM UTC
   schedule:
-    # Run every hour on the hour. The Go script will decide if it's the right time to send.
-    - cron: '0 * * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 23 * * *'
 
   # Allow manual execution from the Actions tab
   workflow_dispatch:
@@ -19,31 +22,26 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v5
 
-      # Step 2: Install Go
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.27'
+          go-version-file: go.mod
           cache: true
 
-      # Step 3: Verify Go installation
       - name: Verify Go version
         run: go version
 
-      # Step 4: Download dependencies
       - name: Download Go dependencies
         run: go mod download
 
-      # Step 5: Run the Telegram report
       - name: Run Report
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # FORCE THE SCRIPT TO USE PHILIPPINE TIME
           TZ: Asia/Manila
+          SCHEDULE_CRON: ${{ github.event.schedule }}
         run: go run ./cmd/report

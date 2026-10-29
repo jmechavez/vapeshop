@@ -18,7 +18,7 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 				<h1 class="font-display italic uppercase tracking-wider text-2xl sm:text-3xl lg:text-4xl leading-none">Sales</h1>
 				<p class="text-sm text-zinc-400 mt-2">Recent transactions and pending carts.</p>
 			</div>
-			<a href="/sales/new" class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition self-start sm:self-auto sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]">
+			<a href="/sales/new" class="btn-glow min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 transition self-start sm:self-auto sm:shadow-[0_0_15px_rgba(163,230,53,0.35)]">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="12" y1="5" x2="12" y2="19"></line> <line x1="5" y1="12" x2="19" y2="12"></line></svg>
 				New Sale
 			</a>
@@ -56,7 +56,7 @@ templ SalesList(sess *auth.Session, list []sales.Sale, f sales.Filter, page sale
 			</div>
 			<div class="md:col-span-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
 				<a href="/sales" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm active:scale-95 transition">Reset</a>
-				<button type="submit" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition">Filter</button>
+				<button type="submit" class="btn-glow min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 transition">Filter</button>
 			</div>
 		</form>
 
@@ -358,7 +358,7 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 						<button
 							type="button"
 							onclick="window.pendingDetailForm = this.closest('form'); openConfirm({title: 'Complete Sale', message: 'Complete this sale? Stock will be deducted.', confirmText: 'Complete', destructive: false, onConfirm: () => { htmx.trigger(window.pendingDetailForm, 'submit'); }})"
-							class="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition"
+							class="btn-glow min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 transition"
 						>Complete sale</button>
 					</form>
 				} else {

@@ -308,7 +308,10 @@ templ SaleDetail(sess *auth.Session, sale sales.Sale) {
 		<div class="bg-zinc-900 border border-zinc-800 rounded-md p-4 max-w-md sm:ml-auto text-sm space-y-2">
 			<div class="flex justify-between text-zinc-300"><span>Subtotal</span><span class="tabular-nums">₱{fmt.Sprintf("%.2f", sale.Subtotal)}</span></div>
 			<div class="flex justify-between text-zinc-300"><span>Discount</span><span class="tabular-nums">₱{fmt.Sprintf("%.2f", sale.Discount)}</span></div>
-			<div class="flex justify-between font-display text-lg border-t border-zinc-800 pt-2"><span>Total</span><span class="text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Total)}</span></div>
+			<div class="flex justify-between font-display text-lg border-t border-zinc-800 pt-2">
+				<span class="pr-2">Total</span>
+				<span class="text-lime-400 tabular-nums">₱{fmt.Sprintf("%.2f", sale.Total)}</span>
+			</div>
 		</div>
 
 		if sale.Status != sales.StatusVoid {

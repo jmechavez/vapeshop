@@ -12,10 +12,50 @@ html {
 
 body {
   font-family: var(--font-sans);
+  /* The "Drift" Garage Floor Grid */
+  background-color: #09090b; /* zinc-950 */
+  background-image: 
+    linear-gradient(rgba(39, 39, 42, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(39, 39, 42, 0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center top;
 }
 
 .font-display {
   font-family: var(--font-display);
+  /* Slight italic slant for a sporty feel */
+  transform: skewX(-4deg);
+  display: inline-block;
+}
+
+/* ---------- Custom Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(9 9 11); /* zinc-950 */
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(39 39 42); /* zinc-800 */
+  border-radius: 5px;
+  border: 2px solid rgb(9 9 11);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(163 230 53); /* lime-400 */
+}
+
+/* ---------- Glow Button Utility ---------- */
+.btn-glow {
+  transition: all 0.2s ease-in-out;
+}
+.btn-glow:hover {
+  box-shadow: 0 0 20px rgba(163, 230, 53, 0.4);
+  transform: translateY(-1px);
+}
+.btn-glow:active {
+  transform: translateY(0);
+  box-shadow: 0 0 10px rgba(163, 230, 53, 0.2);
 }
 
 /* ---------- Toast / flash animation ---------- */
@@ -28,8 +68,26 @@ body {
   animation: toast-in 180ms ease-out both;
 }
 
+/* ---------- Pulsing Glow Animation ---------- */
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: 0 0 5px rgba(163, 230, 53, 0.3); }
+  50% { text-shadow: 0 0 15px rgba(163, 230, 53, 0.8), 0 0 20px rgba(163, 230, 53, 0.4); }
+}
+
+.animate-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* ---------- Smooth Fade In for Modals ---------- */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
 /* ---------- Modal shell ---------- */
-/* Desktop: centered. Mobile: bottom sheet. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -37,12 +95,11 @@ body {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(2px);
   display: flex;
-  align-items: flex-end;          /* mobile: sheet from bottom */
+  align-items: flex-end;
   justify-content: center;
   padding: 0;
 }
 
-/* Hard override so Tailwind's `hidden` utility always wins. */
 .modal-backdrop.hidden {
   display: none;
 }
@@ -58,23 +115,24 @@ body {
   width: 100%;
   max-height: 92vh;
   overflow-y: auto;
-  background: rgb(24 24 27);       /* zinc-900 */
-  border: 1px solid rgb(39 39 42); /* zinc-800 */
+  background: rgb(24 24 27);
+  border: 1px solid rgb(39 39 42);
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  /* Add the fade in animation to the modal */
+  animation: fade-in 0.2s ease-out forwards;
 }
 
 @media (min-width: 640px) {
   .modal-panel {
-    max-width: 32rem;              /* sm: ~512px */
+    max-width: 32rem;
     border-radius: 0.5rem;
   }
 }
 
-/* Safe area for iOS bottom */
 .modal-panel {
   padding-bottom: env(safe-area-inset-bottom);
 }

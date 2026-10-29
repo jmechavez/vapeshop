@@ -1,12 +1,10 @@
-
 name: Daily Telegram Report
 
 on:
-  # 10 PM Philippine time = 2 PM UTC
-  # 7 AM Philippine time = 11 PM UTC
   schedule:
-    - cron: '0 14 * * *'
-    - cron: '0 23 * * *'
+    # Run every hour to ensure we catch the right window even with delays.
+    # The Go script will filter out the hours it doesn't want.
+    - cron: '0 * * * *'
 
   # Allow manual execution from the Actions tab
   workflow_dispatch:
@@ -43,5 +41,4 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TZ: Asia/Manila
-          SCHEDULE_CRON: ${{ github.event.schedule }}
         run: go run ./cmd/report

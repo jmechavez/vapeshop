@@ -41,36 +41,40 @@ func main() {
 	}
 
 	now := time.Now().In(loc)
-	eventName := os.Getenv("GITHUB_EVENT_NAME")
-	scheduleCron := os.Getenv("SCHEDULE_CRON")
+	hour := now.Hour()
 
-	// The workflow schedules:
-	// 0 14 * * * = 10 PM Philippine time
-	// 0 23 * * * = 7 AM Philippine time
-	//
-	// Trust the scheduled event rather than the actual execution hour,
-	// because GitHub Actions may start a scheduled job late.
-	isMorning := eventName == "schedule" &&
-		scheduleCron == "0 23 * * *"
+	// GitHub Actions cron is unreliable and often runs late.
+	// We use a time window to determine which report to send.
+	// Evening window: 10 PM to 4 AM (22, 23, 0, 1, 2, 3)
+	// Morning window: 7 AM to 12 PM (7, 8, 9, 10, 11)
+	isMorning := false
+
+	if hour >= 22 || hour <= 3 {
+		isMorning = false // Evening report window
+	} else if hour >= 7 && hour <= 11 {
+		isMorning = true // Morning report window
+	} else {
+		log.Printf("Skipping report. Current PH hour is %d (only runs between 7 AM - 11 AM or 10 PM - 3 AM).", hour)
+		return
+	}
 
 	var reportDate time.Time
-
-	if eventName == "workflow_dispatch" || eventName == "" {
-		// Manual runs report today's sales, regardless of the time.
-		reportDate = now
-	} else if isMorning {
-		// Morning report: yesterday's sales.
-		reportDate = now.AddDate(0, 0, -1)
+	if isMorning {
+		reportDate = now.AddDate(0, 0, -1) // Morning reports for Yesterday
 	} else {
-		// Evening report: today's sales.
-		reportDate = now
+		// Evening reports for Today, but if it's past midnight (0-3 AM), it's for Yesterday
+		if hour <= 3 {
+			reportDate = now.AddDate(0, 0, -1)
+		} else {
+			reportDate = now
+		}
 	}
 
 	log.Printf(
-		"Starting report. Philippine time: %s; report date: %s; event: %s",
+		"Starting report. Philippine time: %s; report date: %s; isMorning: %v",
 		now.Format("2006-01-02 15:04:05"),
 		reportDate.Format("2006-01-02"),
-		eventName,
+		isMorning,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)

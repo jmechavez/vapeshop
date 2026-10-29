@@ -40,9 +40,23 @@ templ Shell(sess *auth.Session, title string, active string) {
 						verb = String(evt.detail.requestConfig.verb).toLowerCase();
 					}
 					if (verb === 'get') return;
+					
+					// Ignore background cart saves so the modal doesn't close unexpectedly
+					var path = evt.detail.requestConfig ? evt.detail.requestConfig.path : "";
+					if (path.indexOf('split-payments') !== -1 || path.indexOf('discount') !== -1 || path.indexOf('items') !== -1) {
+						return;
+					}
+
 					var t = evt.detail.target;
 					if (t && t.closest && t.closest('[data-modal]')) return;
 					closeAllModals();
+				});
+
+				// Catch errors from the server (like "enter a payment amount before completing the sale")
+				document.addEventListener('htmx:responseError', function(evt) {
+					var xhr = evt.detail.xhr;
+					var errorMsg = xhr.responseText || "An error occurred. Please try again.";
+					showFlash(errorMsg, 'error');
 				});
 
 				var _confirmCallback = null;
@@ -114,15 +128,25 @@ templ Shell(sess *auth.Session, title string, active string) {
 				var _currentSaleTotal = 0;
 
 				function openCompleteModal(total) {
-					_currentSaleTotal = parseFloat(total);
+					_currentSaleTotal = parseFloat(total) || 0;
+					
 					document.getElementById('modal-total-display').innerText = '₱' + _currentSaleTotal.toFixed(2);
 					document.getElementById('cash-tendered-input').value = '';
 					document.getElementById('modal-change-display').innerText = '₱0.00';
+					
+					// Auto-fill the Cash input with the total
+					var cashInput = document.querySelector('input[name="amount_cash"]');
+					if (cashInput) {
+						cashInput.value = _currentSaleTotal.toFixed(2);
+					}
+
 					openModal('complete-modal');
 				}
 
 				function calculateChange() {
-					var tendered = parseFloat(document.getElementById('cash-tendered-input').value) || 0;
+					var inputVal = document.getElementById('cash-tendered-input').value;
+					var tendered = parseFloat(inputVal) || 0;
+					
 					var change = tendered - _currentSaleTotal;
 					var changeDisplay = document.getElementById('modal-change-display');
 					
@@ -138,9 +162,11 @@ templ Shell(sess *auth.Session, title string, active string) {
 				}
 
 				function submitCompleteForm() {
-					var tendered = parseFloat(document.getElementById('cash-tendered-input').value) || 0;
+					var inputVal = document.getElementById('cash-tendered-input').value;
+					var tendered = parseFloat(inputVal) || 0;
+					
 					if (tendered < _currentSaleTotal) {
-						alert("Cash tendered is less than the total amount.");
+						alert("Cash received is less than the total amount.");
 						return;
 					}
 					

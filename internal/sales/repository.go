@@ -376,7 +376,6 @@ func UpdateSplitPayments(ctx context.Context, saleID int64, payments []SplitPaym
 }
 
 // VoidAbandonedPending voids any pending sale for this user that is older than 24 hours.
-// This prevents the POS from loading a ghost cart from yesterday.
 func VoidAbandonedPending(ctx context.Context, userID int64) error {
 	_, err := database.Pool.Exec(ctx, `
 		UPDATE sales
@@ -391,9 +390,7 @@ func VoidAbandonedPending(ctx context.Context, userID int64) error {
 	return err
 }
 
-// COMPLETE with:
-//   - backdate support (saleDate)
-//   - split payment validation (cash can overpay; non-cash cannot)
+// COMPLETE with strict validation
 func Complete(ctx context.Context, saleID, userID int64, saleDate string) error {
 	tx, err := database.Pool.Begin(ctx)
 	if err != nil {
@@ -411,34 +408,25 @@ func Complete(ctx context.Context, saleID, userID int64, saleDate string) error 
 		return fmt.Errorf("read sale total: %w", err)
 	}
 
-	// 2. Read split payments, split by Cash vs non-Cash.
-	var cashPaid, nonCashPaid float64
-	payRows, err := tx.Query(ctx, `SELECT method, amount::float8 FROM sale_payments WHERE sale_id = $1`, saleID)
+	// 2. Read split payments, sum them up.
+	var totalPaid float64
+	payRows, err := tx.Query(ctx, `SELECT amount::float8 FROM sale_payments WHERE sale_id = $1`, saleID)
 	if err != nil {
 		return fmt.Errorf("read payments: %w", err)
 	}
 	for payRows.Next() {
-		var m string
 		var a float64
-		if err := payRows.Scan(&m, &a); err != nil {
+		if err := payRows.Scan(&a); err != nil {
 			payRows.Close()
 			return fmt.Errorf("scan payment: %w", err)
 		}
-		if m == "Cash" {
-			cashPaid += a
-		} else {
-			nonCashPaid += a
-		}
+		totalPaid += a
 	}
 	payRows.Close()
 
-	// 3. Validation rules:
-	//    - Non-cash cannot exceed the total (customer would lose money on e-wallet overpay).
-	//    - Cash + non-cash must be at least the total (no partial sale).
-	if nonCashPaid > total {
-		return ErrInvalidPaymentSum
-	}
-	if cashPaid+nonCashPaid < total {
+	// 3. STRICT Validation: The sum of ALL payments MUST exactly equal the total.
+	// Allow a tiny 0.01 margin for float rounding errors.
+	if totalPaid > total+0.01 || totalPaid < total-0.01 {
 		return ErrInvalidPaymentSum
 	}
 

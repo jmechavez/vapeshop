@@ -341,22 +341,32 @@ templ SaleCart(sale sales.Sale) {
 						class="text-base px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-sm text-white focus:outline-none focus:border-lime-400"
 					/>
 				</div>
+				
 				<div class="flex flex-col sm:flex-row gap-2">
+					<!-- Button 1: For Cash (opens the modal) -->
 					<button
 						type="button"
 						data-total={ fmt.Sprintf("%.2f", sale.Total) }
 						onclick="openCompleteModal(this.dataset.total)"
-						class={ "min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
+						class={ "min-h-[44px] w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm bg-lime-400 text-black font-semibold uppercase tracking-wide text-sm hover:bg-lime-300 active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
 						disabled?={ len(sale.Items) == 0 }
-					>Complete sale</button>
-					<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">View detail</a>
+					>Pay with Cash</button>
+
+					<!-- Button 2: For Maribank/GCash (submits directly) -->
+					<button
+						type="submit"
+						class={ "min-h-[44px] w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-sm border-2 border-lime-400 text-lime-400 font-semibold uppercase tracking-wide text-sm hover:bg-lime-400 hover:text-black active:scale-95 transition", templ.KV("opacity-40 cursor-not-allowed", len(sale.Items) == 0) }
+						disabled?={ len(sale.Items) == 0 }
+					>Complete Sale</button>
 				</div>
+				
+				<a href={ templ.SafeURL("/sales/" + strconv.FormatInt(sale.ID, 10)) } class="mt-2 min-h-[44px] inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-sm border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-sm font-medium active:scale-95 transition">View detail</a>
 			</form>
 			<p class="text-xs text-zinc-500 pt-1">The sale stays <span class="text-zinc-300 font-medium">pending</span> until you complete it. Refreshing this page keeps the cart.</p>
 		</div>
 	</div>
 
-	<!-- CASH RECEIVED MODAL -->
+	<!-- CASH TENDER MODAL -->
 	<div id="complete-modal" data-modal class="modal-backdrop hidden">
 		<div class="modal-panel">
 			<div class="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">

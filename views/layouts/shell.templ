@@ -109,6 +109,44 @@ templ Shell(sess *auth.Session, title string, active string) {
 					var wrap = document.getElementById('void-note-wrap'); if (!wrap) return;
 					if (sel.value === 'Other') wrap.classList.remove('hidden'); else wrap.classList.add('hidden');
 				}
+
+				// --- CASH TENDER MODAL LOGIC ---
+				var _currentSaleTotal = 0;
+
+				function openCompleteModal(total) {
+					_currentSaleTotal = parseFloat(total);
+					document.getElementById('modal-total-display').innerText = '₱' + _currentSaleTotal.toFixed(2);
+					document.getElementById('cash-tendered-input').value = '';
+					document.getElementById('modal-change-display').innerText = '₱0.00';
+					openModal('complete-modal');
+				}
+
+				function calculateChange() {
+					var tendered = parseFloat(document.getElementById('cash-tendered-input').value) || 0;
+					var change = tendered - _currentSaleTotal;
+					var changeDisplay = document.getElementById('modal-change-display');
+					
+					if (change >= 0) {
+						changeDisplay.innerText = '₱' + change.toFixed(2);
+						changeDisplay.classList.remove('text-red-500');
+						changeDisplay.classList.add('text-white');
+					} else {
+						changeDisplay.innerText = 'Short: ₱' + Math.abs(change).toFixed(2);
+						changeDisplay.classList.remove('text-white');
+						changeDisplay.classList.add('text-red-500');
+					}
+				}
+
+				function submitCompleteForm() {
+					var tendered = parseFloat(document.getElementById('cash-tendered-input').value) || 0;
+					if (tendered < _currentSaleTotal) {
+						alert("Cash tendered is less than the total amount.");
+						return;
+					}
+					
+					closeModal('complete-modal');
+					htmx.trigger('#complete-form', 'submit');
+				}
 			</script>
 		</head>
 		<body class="bg-zinc-950 text-white min-h-screen font-sans antialiased">

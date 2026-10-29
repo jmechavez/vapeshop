@@ -8,6 +8,8 @@
 /* ---------- Base ---------- */
 html {
   -webkit-text-size-adjust: 100%;
+  /* Prevents the page from shifting left/right when a scrollbar appears/disappears */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -122,7 +124,6 @@ body {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  /* Add the fade in animation to the modal */
   animation: fade-in 0.2s ease-out forwards;
 }
 
